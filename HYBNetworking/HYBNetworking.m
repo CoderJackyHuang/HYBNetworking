@@ -57,13 +57,6 @@ static BOOL sg_shouldAutoEncode = YES;
                              params:(NSDictionary *)params
                             success:(HYBResponseSuccess)success
                                fail:(HYBResponseFail)fail {
-  if (![self isParamValid:params]) {
-    if (fail) {
-      fail([NSError errorWithDomain:@"http://henishuo.com" code:-1 userInfo:@{@"errorMessage": @"参数params中包含空值，会引起崩溃"}]);
-    }
-    return nil;
-  }
-  
   AFHTTPRequestOperationManager *manager = [self manager];
   
   if ([self shouldEncode]) {
@@ -95,13 +88,6 @@ static BOOL sg_shouldAutoEncode = YES;
                               params:(NSDictionary *)params
                              success:(HYBResponseSuccess)success
                                 fail:(HYBResponseFail)fail {
-  if (![self isParamValid:params]) {
-    if (fail) {
-      fail([NSError errorWithDomain:@"http://henishuo.com" code:-1 userInfo:@{@"errorMessage": @"参数params中包含空值，会引起崩溃"}]);
-    }
-    return nil;
-  }
-  
   if ([self shouldEncode]) {
     url = [self encodeUrl:url];
   }
@@ -212,24 +198,6 @@ static BOOL sg_shouldAutoEncode = YES;
 
 + (NSString *)encodeUrl:(NSString *)url {
   return [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-}
-
-+ (BOOL)isParamValid:(NSDictionary *)params {
-  for (NSString *key in params.allKeys) {
-    id value = params[key];
-    
-    if (value == nil) {
-      return NO;
-    }
-    
-    if ([value isKindOfClass:[NSString class]]) {
-      if (((NSString *)value).length == 0) {
-        return NO;
-      }
-    }
-  }
-  
-  return YES;
 }
 
 @end
