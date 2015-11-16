@@ -20,6 +20,7 @@
 static NSString *sg_privateNetworkBaseUrl = nil;
 static BOOL sg_isEnableInterfaceDebug = NO;
 static BOOL sg_shouldAutoEncode = YES;
+static NSDictionary *sg_httpHeaders = nil;
 
 @implementation HYBNetworking
 
@@ -45,6 +46,10 @@ static BOOL sg_shouldAutoEncode = YES;
 
 + (BOOL)shouldEncode {
   return sg_shouldAutoEncode;
+}
+
++ (void)configCommonHttpHeaders:(NSDictionary *)httpHeaders {
+  sg_httpHeaders = httpHeaders;
 }
 
 + (HYBRequestOperation *)getWithUrl:(NSString *)url
@@ -170,8 +175,14 @@ static BOOL sg_shouldAutoEncode = YES;
   manager.requestSerializer = [AFJSONRequestSerializer serializer];
   manager.responseSerializer = [AFJSONResponseSerializer serializer];
   manager.requestSerializer.stringEncoding = NSUTF8StringEncoding;
+      
   [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Accept"];
   [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+  for (NSString *key in sg_httpHeaders.allKeys) {
+    if (sg_httpHeaders[key] != nil) {
+      [manager.requestSerializer setValue:sg_httpHeaders[key] forHTTPHeaderField:key];
+    }
+  }
   manager.responseSerializer.acceptableContentTypes = [NSSet setWithArray:@[@"application/json",
                                                                             @"text/html",
                                                                             @"text/json",

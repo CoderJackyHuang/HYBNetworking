@@ -81,6 +81,15 @@ typedef void(^HYBResponseFail)(NSError *error);
 + (void)shouldAutoEncodeUrl:(BOOL)shouldAutoEncode;
 
 /*!
+ *  @author 黄仪标, 15-11-16 13:11:41
+ *
+ *  配置公共的请求头，只调用一次即可，通常放在应用启动的时候配置就可以了
+ *
+ *  @param httpHeaders 只需要将与服务器商定的固定参数设置即可
+ */
++ (void)configCommonHttpHeaders:(NSDictionary *)httpHeaders;
+
+/*!
  *  @author 黄仪标, 15-11-15 13:11:50
  *
  *  GET请求接口，若不指定baseurl，可传完整的url
