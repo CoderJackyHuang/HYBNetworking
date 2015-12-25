@@ -9,6 +9,16 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+typedef NS_ENUM(NSUInteger, HYBResponseType) {
+  kHYBResponseTypeJSON = 1, // 默认
+  kHYBResponseTypeXML  = 2 // XML
+};
+
+typedef NS_ENUM(NSUInteger, HYBRequestType) {
+  kHYBRequestTypeJSON = 1, // 默认
+  kHYBRequestTypePlainText  = 2 // 普通text/html
+};
+
 @class AFHTTPRequestOperation;
 
 // 请勿直接使用AFHTTPRequestOperation,以减少对第三方的依赖
@@ -70,6 +80,24 @@ typedef void(^HYBResponseFail)(NSError *error);
  *  @param isDebug 开发期，最好打开，默认是NO
  */
 + (void)enableInterfaceDebug:(BOOL)isDebug;
+
+/*!
+ *  @author 黄仪标, 15-12-25 15:12:38
+ *
+ *  配置返回格式，默认为JSON。若为XML或者PLIST请在全局修改一下
+ *
+ *  @param responseType 响应格式
+ */
++ (void)configResponseType:(HYBResponseType)responseType;
+
+/*!
+ *  @author 黄仪标, 15-12-25 15:12:45
+ *
+ *  配置请求格式，默认为JSON。如果要求传XML或者PLIST，请在全局配置一下
+ *
+ *  @param requestType 请求格式
+ */
++ (void)configRequestType:(HYBRequestType)requestType;
 
 /*!
  *  @author 黄仪标, 15-11-15 15:11:16

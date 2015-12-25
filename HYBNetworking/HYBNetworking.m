@@ -21,6 +21,8 @@ static NSString *sg_privateNetworkBaseUrl = nil;
 static BOOL sg_isEnableInterfaceDebug = NO;
 static BOOL sg_shouldAutoEncode = YES;
 static NSDictionary *sg_httpHeaders = nil;
+static HYBResponseType sg_responseType = kHYBResponseTypeJSON;
+static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
 
 @implementation HYBNetworking
 
@@ -38,6 +40,14 @@ static NSDictionary *sg_httpHeaders = nil;
 
 + (BOOL)isDebug {
   return sg_isEnableInterfaceDebug;
+}
+
++ (void)configResponseType:(HYBResponseType)responseType {
+  sg_responseType = responseType;
+}
+
++ (void)configRequestType:(HYBRequestType)requestType {
+  sg_requestType = requestType;
 }
 
 + (void)shouldAutoEncodeUrl:(BOOL)shouldAutoEncode {
@@ -172,12 +182,39 @@ static NSDictionary *sg_httpHeaders = nil;
   
   AFHTTPRequestOperationManager *manager = [[AFHTTPRequestOperationManager alloc]
                                             initWithBaseURL:[NSURL URLWithString:[self baseUrl]]];
-  manager.requestSerializer = [AFJSONRequestSerializer serializer];
-  manager.responseSerializer = [AFJSONResponseSerializer serializer];
+  switch (sg_requestType) {
+    case kHYBRequestTypeJSON: {
+      manager.requestSerializer = [AFJSONRequestSerializer serializer];
+      break;
+    }
+    case kHYBRequestTypePlainText: {
+      manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
+  switch (sg_responseType) {
+    case kHYBResponseTypeJSON: {
+      manager.responseSerializer = [AFJSONResponseSerializer serializer];
+      break;
+    }
+    case kHYBResponseTypeXML: {
+      manager.responseSerializer = [AFXMLParserResponseSerializer serializer];
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
   manager.requestSerializer.stringEncoding = NSUTF8StringEncoding;
-      
+  
   [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Accept"];
   [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+
   for (NSString *key in sg_httpHeaders.allKeys) {
     if (sg_httpHeaders[key] != nil) {
       [manager.requestSerializer setValue:sg_httpHeaders[key] forHTTPHeaderField:key];
@@ -186,7 +223,9 @@ static NSDictionary *sg_httpHeaders = nil;
   manager.responseSerializer.acceptableContentTypes = [NSSet setWithArray:@[@"application/json",
                                                                             @"text/html",
                                                                             @"text/json",
-                                                                            @"text/javascript"]];
+                                                                            @"text/javascript",
+                                                                            @"text/xml",
+                                                                            @"image/*"]];
   
   // 设置允许同时最大并发数量，过大容易出问题
   manager.operationQueue.maxConcurrentOperationCount = 3;
