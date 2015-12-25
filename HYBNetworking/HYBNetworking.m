@@ -257,7 +257,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
                                                                options:NSJSONReadingMutableContainers
                                                                  error:&error];
       
-      if (error != nil || response == nil) {
+      if (error != nil || responseData == nil) {
         return responseData;
       } else {
         return response;
