@@ -11,7 +11,9 @@
 
 typedef NS_ENUM(NSUInteger, HYBResponseType) {
   kHYBResponseTypeJSON = 1, // 默认
-  kHYBResponseTypeXML  = 2 // XML
+  kHYBResponseTypeXML  = 2, // XML
+  // 特殊情况下，一转换服务器就无法识别的，默认会尝试转换成JSON，若失败则需要自己去转换
+  kHYBResponseTypeData = 3
 };
 
 typedef NS_ENUM(NSUInteger, HYBRequestType) {

@@ -79,9 +79,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   }
   
   AFHTTPRequestOperation *op = [manager GET:url parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
-    if (success) {
-      success(responseObject);
-    }
+    [self successResponse:responseObject callback:success];
     
     if ([self isDebug]) {
       [self logWithSuccessResponse:responseObject url:operation.response.URL.absoluteString params:params];
@@ -108,11 +106,8 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   }
   
   AFHTTPRequestOperationManager *manager = [self manager];
-  
   AFHTTPRequestOperation *op = [manager POST:url parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
-    if (success) {
-      success(responseObject);
-    }
+    [self successResponse:responseObject callback:success];
     
     if ([self isDebug]) {
       [self logWithSuccessResponse:responseObject url:operation.response.URL.absoluteString params:params];
@@ -155,9 +150,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     // 上传图片，以文件流的格式
     [formData appendPartWithFileData:imageData name:name fileName:imageFileName mimeType:@"image/jpeg"];
   } success:^(AFHTTPRequestOperation *operation, id responseObject) {
-    if (success) {
-      success(responseObject);
-    }
+    [self successResponse:responseObject callback:success];
     
     if ([self isDebug]) {
       [self logWithSuccessResponse:responseObject url:operation.response.URL.absoluteString params:nil];
@@ -195,7 +188,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
       break;
     }
   }
-
+  
   switch (sg_responseType) {
     case kHYBResponseTypeJSON: {
       manager.responseSerializer = [AFJSONResponseSerializer serializer];
@@ -205,16 +198,19 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
       manager.responseSerializer = [AFXMLParserResponseSerializer serializer];
       break;
     }
+    case kHYBResponseTypeData: {
+      manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    }
     default: {
       break;
     }
   }
-
+  
   manager.requestSerializer.stringEncoding = NSUTF8StringEncoding;
   
   [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Accept"];
   [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-
+  
   for (NSString *key in sg_httpHeaders.allKeys) {
     if (sg_httpHeaders[key] != nil) {
       [manager.requestSerializer setValue:sg_httpHeaders[key] forHTTPHeaderField:key];
@@ -248,6 +244,34 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
 
 + (NSString *)encodeUrl:(NSString *)url {
   return [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (id)tryToParseData:(id)responseData {
+  if ([responseData isKindOfClass:[NSData class]]) {
+    // 尝试解析成JSON
+    if (responseData == nil) {
+      return responseData;
+    } else {
+      NSError *error = nil;
+      NSDictionary *response = [NSJSONSerialization JSONObjectWithData:responseData
+                                                               options:NSJSONReadingMutableContainers
+                                                                 error:&error];
+      
+      if (error != nil || response == nil) {
+        return responseData;
+      } else {
+        return response;
+      }
+    }
+  } else {
+    return responseData;
+  }
+}
+
++ (void)successResponse:(id)responseData callback:(HYBResponseSuccess)success {
+  if (success) {
+    success([self tryToParseData:responseData]);
+  }
 }
 
 @end
