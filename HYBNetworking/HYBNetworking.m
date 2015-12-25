@@ -205,6 +205,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     }
     case kHYBResponseTypeData: {
       manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+      break;
     }
     default: {
       break;
@@ -262,7 +263,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
                                                                options:NSJSONReadingMutableContainers
                                                                  error:&error];
       
-      if (error != nil || response == nil) {
+      if (error != nil) {
         return responseData;
       } else {
         return response;
