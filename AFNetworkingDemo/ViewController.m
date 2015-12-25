@@ -44,6 +44,7 @@
   NSString *url = @"/microservice/cityinfo?cityname=北京";
   // 设置请求类型为text/html类型
   [HYBNetworking configRequestType:kHYBRequestTypePlainText];
+  [HYBNetworking configResponseType:kHYBResponseTypeData];
   [HYBNetworking getWithUrl:url success:^(id response) {
     
   } fail:^(NSError *error) {

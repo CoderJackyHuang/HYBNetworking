@@ -232,7 +232,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   HYBAppLog(@"\nabsoluteUrl: %@\n params:%@\n response:%@\n\n",
             url,
             params,
-            response);
+            [self tryToParseData:response]);
 }
 
 + (void)logWithFailError:(NSError *)error url:(NSString *)url params:(NSDictionary *)params {
