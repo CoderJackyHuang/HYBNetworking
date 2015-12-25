@@ -173,8 +173,13 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   // 开启转圈圈
   [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
   
-  AFHTTPRequestOperationManager *manager = [[AFHTTPRequestOperationManager alloc]
-                                            initWithBaseURL:[NSURL URLWithString:[self baseUrl]]];
+  AFHTTPRequestOperationManager *manager = nil;;
+  if ([self baseUrl] != nil) {
+    manager = [[AFHTTPRequestOperationManager alloc] initWithBaseURL:[NSURL URLWithString:[self baseUrl]]];
+  } else {
+    manager = [AFHTTPRequestOperationManager manager];
+  }
+  
   switch (sg_requestType) {
     case kHYBRequestTypeJSON: {
       manager.requestSerializer = [AFJSONRequestSerializer serializer];
