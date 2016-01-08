@@ -9,7 +9,7 @@
 #import "HYBNetworking.h"
 #import "AFNetworking.h"
 #import "AFNetworkActivityIndicatorManager.h"
-#import <AFNetworking/AFHTTPRequestOperation.h>
+#import "AFHTTPRequestOperation.h"
 
 // 项目打包上线都不会打印日志，因此可放心。
 #ifdef DEBUG
