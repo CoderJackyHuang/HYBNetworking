@@ -44,7 +44,7 @@
  @param task The task. If `nil`, automatic updating from any previously specified operation will be disabled.
  */
 #if __IPHONE_OS_VERSION_MIN_REQUIRED >= 70000
-- (void)setAnimatingWithStateOfTask:(nullable NSURLSessionTask *)task;
+- (void)setAnimatingWithStateOfTask:(NSURLSessionTask *)task;
 #endif
 
 ///---------------------------------------
@@ -56,7 +56,7 @@
 
  @param operation The operation. If `nil`, automatic updating from any previously specified operation will be disabled.
  */
-- (void)setAnimatingWithStateOfOperation:(nullable AFURLConnectionOperation *)operation;
+- (void)setAnimatingWithStateOfOperation:(AFURLConnectionOperation *)operation;
 
 @end
 
