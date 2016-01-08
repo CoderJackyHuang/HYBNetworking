@@ -9,6 +9,7 @@
 #import "HYBNetworking.h"
 #import <AFNetworking.h>
 #import <AFNetworkActivityIndicatorManager.h>
+#import <AFNetworking/AFHTTPRequestOperation.h>
 
 // 项目打包上线都不会打印日志，因此可放心。
 #ifdef DEBUG
@@ -131,6 +132,22 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
                                     name:(NSString *)name
                                  success:(HYBResponseSuccess)success
                                     fail:(HYBResponseFail)fail {
+  return [self uploadWithImage:image
+                           url:url
+                      filename:filename
+                          name:name
+                      progress:nil
+                       success:success
+                          fail:fail];
+}
+
++ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
+                                     url:(NSString *)url
+                                filename:(NSString *)filename
+                                    name:(NSString *)name
+                                progress:(HYBUploadProgress)progress
+                                 success:(HYBResponseSuccess)success
+                                    fail:(HYBResponseFail)fail {
   if ([self shouldEncode]) {
     url = [self encodeUrl:url];
   }
@@ -165,6 +182,37 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     }
   }];
   
+  if (progress) {
+    [op setUploadProgressBlock:progress];
+  }
+  
+  return op;
+}
+
++ (HYBRequestOperation *)downloadWithUrl:(NSString *)url
+             saveToPath:(NSString *)saveToPath
+               progress:(HYBDownloadProgress)progressBlock
+                success:(HYBResponseSuccess)success
+                failure:(HYBResponseFail)failure {
+  NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+  HYBRequestOperation *op = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
+  
+  op.outputStream = [NSOutputStream outputStreamToFileAtPath:saveToPath append:NO];
+  [op setDownloadProgressBlock:progressBlock];
+  
+  [op setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+    if (success) {
+      // 将下载后的文件路径返回
+      success(saveToPath);
+    }
+  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    if (failure) {
+      failure(error);
+    }
+  }];
+  
+  [op start];
+ 
   return op;
 }
 

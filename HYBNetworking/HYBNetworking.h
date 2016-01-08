@@ -187,4 +187,71 @@ typedef void(^HYBResponseFail)(NSError *error);
                                     name:(NSString *)name
                                  success:(HYBResponseSuccess)success
                                     fail:(HYBResponseFail)fail;
+
+/*!
+ *  @author 黄仪标, 16-01-08 14:01:26
+ *
+ *  上传进度
+ *
+ *  @param bytesWritten              已上传的大小
+ *  @param totalBytesWritten         总上传大小
+ *  @param totalBytesExpectedToWrite 还有多少需要上传
+ */
+typedef void (^HYBUploadProgress)(NSUInteger bytesWritten,
+                                  long long totalBytesWritten,
+                                  long long totalBytesExpectedToWrite);
+
+/*!
+ *  @author 黄仪标, 15-11-15 13:11:39
+ *
+ *  图片上传接口，若不指定baseurl，可传完整的url
+ *
+ *  @param image    图片对象
+ *  @param url      上传图片的接口路径，如/path/images/
+ *  @param filename 给图片起一个名字，默认为当前日期时间,格式为"yyyyMMddHHmmss"，后缀为`jpg`
+ *  @param name     与指定的图片相关联的名称，这是由后端写接口的人指定的，如imagefiles
+ *  @param progress 上传进度
+ *  @param success  上传成功的回调
+ *  @param fail     上传失败的回调
+ *
+ *  @return 返回类型有取消请求的api
+ */
++ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
+                                     url:(NSString *)url
+                                filename:(NSString *)filename
+                                    name:(NSString *)name
+                                progress:(HYBUploadProgress)progress
+                                 success:(HYBResponseSuccess)success
+                                    fail:(HYBResponseFail)fail;
+
+/*!
+ *  @author 黄仪标, 16-01-08 14:01:26
+ *
+ *  下载进度
+ *
+ *  @param bytesRead                 已下载的大小
+ *  @param totalBytesRead            文件总大小
+ *  @param totalBytesExpectedToRead 还有多少需要下载
+ */
+typedef void (^HYBDownloadProgress)(NSUInteger bytesRead,
+                                    long long totalBytesRead,
+                                    long long totalBytesExpectedToRead);
+
+/*!
+ *  @author 黄仪标, 16-01-08 15:01:11
+ *
+ *  下载文件
+ *
+ *  @param url           下载URL
+ *  @param saveToPath    下载到哪个路径下
+ *  @param progressBlock 下载进度
+ *  @param success       下载成功后的回调
+ *  @param failure       下载失败后的回调
+ */
++ (HYBRequestOperation *)downloadWithUrl:(NSString *)url
+                              saveToPath:(NSString *)saveToPath
+                                progress:(HYBDownloadProgress)progressBlock
+                                 success:(HYBResponseSuccess)success
+                                 failure:(HYBResponseFail)failure;
+
 @end
