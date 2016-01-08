@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
 
   s.name         = "HYBNetworking"
   s.version      = "1.1"
-  s.summary      = "基于AFNetworking2.5.3封装的简单易用网络库，提供了常用的API"
+  s.summary      = "基于AFNetworking2.6.3封装的简单易用网络库，提供了常用的API"
 
   # This description is used to generate tags and improve search results.
   #   * Think: What does it do? Why did you write it? What is the focus?
@@ -25,6 +25,7 @@ Pod::Spec.new do |s|
   #   * Write the description between the DESC delimiters below.
   #   * Finally, don't worry about the indent, CocoaPods strips it!
   s.description  = <<-DESC
+                   基于AFNetworking2.6.3封装的网络库，提供了常用的API，调用简单。若在使用过程中有问题，请反馈与作者，以便完善之！
                    DESC
 
   s.homepage     = "https://github.com/CoderJackyHuang/HYBNetworking"
@@ -64,13 +65,13 @@ Pod::Spec.new do |s|
   #
 
   s.platform     = :ios
-  # s.platform     = :ios, "5.0"
+#s.platform     = :ios, "5.0"
 
   #  When using multiple platforms
-  # s.ios.deployment_target = "5.0"
-  # s.osx.deployment_target = "10.7"
+  s.ios.deployment_target = "7.0"
+  #s.osx.deployment_target = "10.7"
   # s.watchos.deployment_target = "2.0"
-  # s.tvos.deployment_target = "9.0"
+  #s.tvos.deployment_target = "9.0"
 
 
   # ――― Source Location ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
@@ -132,6 +133,6 @@ Pod::Spec.new do |s|
   s.requires_arc = true
 
   # s.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
- s.dependency "AFNetworking", "~> 2.5.3"
+ s.dependency "AFNetworking", "~> 2.6.3"
 
 end

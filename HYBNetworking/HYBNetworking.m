@@ -7,8 +7,8 @@
 //
 
 #import "HYBNetworking.h"
-#import <AFNetworking.h>
-#import <AFNetworkActivityIndicatorManager.h>
+#import "AFNetworking.h"
+#import "AFNetworkActivityIndicatorManager.h"
 #import <AFNetworking/AFHTTPRequestOperation.h>
 
 // 项目打包上线都不会打印日志，因此可放心。
