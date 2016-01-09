@@ -3,8 +3,13 @@
 
 #version1.1
 
-* 升级AFNetworking到2.6.3
+* 升级AFNetworking到2.5.4
 * 新增带上传进度的API和带进度的下载API，详细请阅读下面的博文
+* 支持pod:    pod 'HYBNetworking', '~> 1.1'
+
+#version 1.1.1
+
+* 修改原来默认URLEncode由YES改为NO。
 
 #文章讲解
 笔者的个人博客发表的讲解的文章：[http://www.henishuo.com/base-on-afnetworking-wrapper/](http://www.henishuo.com/base-on-afnetworking-wrapper/)
