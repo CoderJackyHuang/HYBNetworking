@@ -20,7 +20,7 @@
 
 static NSString *sg_privateNetworkBaseUrl = nil;
 static BOOL sg_isEnableInterfaceDebug = NO;
-static BOOL sg_shouldAutoEncode = YES;
+static BOOL sg_shouldAutoEncode = NO;
 static NSDictionary *sg_httpHeaders = nil;
 static HYBResponseType sg_responseType = kHYBResponseTypeJSON;
 static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
