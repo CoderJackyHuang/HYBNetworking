@@ -273,6 +273,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   manager.responseSerializer.acceptableContentTypes = [NSSet setWithArray:@[@"application/json",
                                                                             @"text/html",
                                                                             @"text/json",
+                                                                            @"text/plain",
                                                                             @"text/javascript",
                                                                             @"text/xml",
                                                                             @"image/*"]];

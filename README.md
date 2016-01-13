@@ -11,6 +11,10 @@
 
 * 修改原来默认URLEncode由YES改为NO。
 
+#version 1.1.2
+
+* 追加text/plain格式
+
 #文章讲解
 笔者的个人博客发表的讲解的文章：[http://www.henishuo.com/base-on-afnetworking-wrapper/](http://www.henishuo.com/base-on-afnetworking-wrapper/)
 

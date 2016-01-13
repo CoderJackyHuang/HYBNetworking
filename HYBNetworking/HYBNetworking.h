@@ -106,7 +106,7 @@ typedef void(^HYBResponseFail)(NSError *error);
  *
  *  开启或关闭是否自动将URL使用UTF8编码，用于处理链接中有中文时无法请求的问题
  *
- *  @param shouldAutoEncode YES or NO,默认为YES
+ *  @param shouldAutoEncode YES or NO,默认为NO
  */
 + (void)shouldAutoEncodeUrl:(BOOL)shouldAutoEncode;
 
