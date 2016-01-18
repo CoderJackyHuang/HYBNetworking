@@ -145,6 +145,41 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
                                      url:(NSString *)url
                                 filename:(NSString *)filename
                                     name:(NSString *)name
+                              parameters:(NSDictionary *)parameters
+                                 success:(HYBResponseSuccess)success
+                                    fail:(HYBResponseFail)fail {
+  return [self uploadWithImage:image
+                           url:url
+                      filename:filename
+                          name:name
+                    parameters:parameters
+                      progress:nil
+                       success:success
+                          fail:fail];
+}
+
++ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
+                                     url:(NSString *)url
+                                filename:(NSString *)filename
+                                    name:(NSString *)name
+                                progress:(HYBUploadProgress)progress
+                                 success:(HYBResponseSuccess)success
+                                    fail:(HYBResponseFail)fail {
+  return [self uploadWithImage:image
+                           url:url
+                      filename:filename
+                          name:name
+                    parameters:nil
+                      progress:progress
+                       success:success
+                          fail:fail];
+}
+
++ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
+                                     url:(NSString *)url
+                                filename:(NSString *)filename
+                                    name:(NSString *)name
+                              parameters:(NSDictionary *)parameters
                                 progress:(HYBUploadProgress)progress
                                  success:(HYBResponseSuccess)success
                                     fail:(HYBResponseFail)fail {
@@ -153,7 +188,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   }
   
   AFHTTPRequestOperationManager *manager = [self manager];
-  AFHTTPRequestOperation *op = [manager POST:url parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+  AFHTTPRequestOperation *op = [manager POST:url parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
     NSData *imageData = UIImageJPEGRepresentation(image, 1);
     
     NSString *imageFileName = filename;
@@ -231,6 +266,8 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   switch (sg_requestType) {
     case kHYBRequestTypeJSON: {
       manager.requestSerializer = [AFJSONRequestSerializer serializer];
+      [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Accept"];
+      [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
       break;
     }
     case kHYBRequestTypePlainText: {
@@ -262,8 +299,6 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   
   manager.requestSerializer.stringEncoding = NSUTF8StringEncoding;
   
-  [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Accept"];
-  [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
   
   for (NSString *key in sg_httpHeaders.allKeys) {
     if (sg_httpHeaders[key] != nil) {

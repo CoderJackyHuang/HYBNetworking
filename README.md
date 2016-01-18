@@ -15,6 +15,10 @@
 
 * 追加text/plain格式
 
+#version 1.1.3
+
+* 追加两个兼容性API，图片上传时可额外上传参数
+
 #文章讲解
 笔者的个人博客发表的讲解的文章：[http://www.henishuo.com/base-on-afnetworking-wrapper/](http://www.henishuo.com/base-on-afnetworking-wrapper/)
 

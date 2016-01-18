@@ -187,6 +187,13 @@ typedef void(^HYBResponseFail)(NSError *error);
                                     name:(NSString *)name
                                  success:(HYBResponseSuccess)success
                                     fail:(HYBResponseFail)fail;
++ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
+                                     url:(NSString *)url
+                                filename:(NSString *)filename
+                                    name:(NSString *)name
+                              parameters:(NSDictionary *)parameters
+                                 success:(HYBResponseSuccess)success
+                                    fail:(HYBResponseFail)fail;
 
 /*!
  *  @author 黄仪标, 16-01-08 14:01:26
@@ -220,6 +227,14 @@ typedef void (^HYBUploadProgress)(NSUInteger bytesWritten,
                                      url:(NSString *)url
                                 filename:(NSString *)filename
                                     name:(NSString *)name
+                                progress:(HYBUploadProgress)progress
+                                 success:(HYBResponseSuccess)success
+                                    fail:(HYBResponseFail)fail;
++ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
+                                     url:(NSString *)url
+                                filename:(NSString *)filename
+                                    name:(NSString *)name
+                              parameters:(NSDictionary *)parameters
                                 progress:(HYBUploadProgress)progress
                                  success:(HYBResponseSuccess)success
                                     fail:(HYBResponseFail)fail;
