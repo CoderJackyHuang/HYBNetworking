@@ -19,6 +19,21 @@
 
 * 追加两个兼容性API，图片上传时可额外上传参数
 
+#version 2.0.0
+
+* 升级AFNetworking到3.0，基于AFNetworking3.0.4而写的版本
+* 支持iOS7.0及其以上版本
+
+```
+pod 'HYBNetworking', '~>2.0.0'
+```
+
+若要支持iOS6.0，可使用前一版本：
+
+```
+pod 'HYBNetworking', '~>1.1.3'
+```
+
 #文章讲解
 笔者的个人博客发表的讲解的文章：[http://www.henishuo.com/base-on-afnetworking-wrapper/](http://www.henishuo.com/base-on-afnetworking-wrapper/)
 
