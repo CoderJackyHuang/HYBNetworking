@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "HYBNetworking"
-  s.version      = "1.1.3"
+  s.version      = "2.0.0"
   s.summary      = "基于AFNetworking2.5封装的简单易用网络库，提供了常用的API"
 
   # This description is used to generate tags and improve search results.
@@ -79,7 +79,7 @@ s.platform     = :ios, "6.0"
   #  Supports git, hg, bzr, svn and HTTP.
   #
 
-  s.source       = { :git => "https://github.com/CoderJackyHuang/HYBNetworking.git", :tag => "1.1.3" }
+  s.source       = { :git => "https://github.com/CoderJackyHuang/HYBNetworking.git", :tag => "2.0.0" }
 
 
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #

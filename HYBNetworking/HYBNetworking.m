@@ -9,11 +9,11 @@
 #import "HYBNetworking.h"
 #import "AFNetworking.h"
 #import "AFNetworkActivityIndicatorManager.h"
-#import "AFHTTPRequestOperation.h"
+#import "AFHTTPSessionManager.h"
 
 // 项目打包上线都不会打印日志，因此可放心。
 #ifdef DEBUG
-#define HYBAppLog(s, ... ) NSLog( @"[%@：in line: %d]-->[message: %@]", [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__] )
+#define HYBAppLog(s, ... ) NSLog( @"[%@：in line: %d]-->%@", [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__] )
 #else
 #define HYBAppLog(s, ... )
 #endif
@@ -63,132 +63,209 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   sg_httpHeaders = httpHeaders;
 }
 
-+ (HYBRequestOperation *)getWithUrl:(NSString *)url
-                            success:(HYBResponseSuccess)success
-                               fail:(HYBResponseFail)fail {
++ (HYBURLSessionTask *)getWithUrl:(NSString *)url
+                          success:(HYBResponseSuccess)success
+                             fail:(HYBResponseFail)fail {
   return [self getWithUrl:url params:nil success:success fail:fail];
 }
 
-+ (HYBRequestOperation *)getWithUrl:(NSString *)url
-                             params:(NSDictionary *)params
-                            success:(HYBResponseSuccess)success
-                               fail:(HYBResponseFail)fail {
-  AFHTTPRequestOperationManager *manager = [self manager];
-  
-  if ([self shouldEncode]) {
-    url = [self encodeUrl:url];
-  }
-  
-  AFHTTPRequestOperation *op = [manager GET:url parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
-    [self successResponse:responseObject callback:success];
-    
-    if ([self isDebug]) {
-      [self logWithSuccessResponse:responseObject url:operation.response.URL.absoluteString params:params];
-    }
-  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-    if (fail) {
-      fail(error);
-    }
-    
-    if ([self isDebug]) {
-      [self logWithFailError:error url:operation.response.URL.absoluteString params:params];
-    }
-  }];
-  
-  return op;
++ (HYBURLSessionTask *)getWithUrl:(NSString *)url
+                           params:(NSDictionary *)params
+                          success:(HYBResponseSuccess)success
+                             fail:(HYBResponseFail)fail {
+  return [self getWithUrl:url params:params progress:nil success:success fail:fail];
 }
 
-+ (HYBRequestOperation *)postWithUrl:(NSString *)url
-                              params:(NSDictionary *)params
-                             success:(HYBResponseSuccess)success
-                                fail:(HYBResponseFail)fail {
-  if ([self shouldEncode]) {
-    url = [self encodeUrl:url];
-  }
-  
-  AFHTTPRequestOperationManager *manager = [self manager];
-  AFHTTPRequestOperation *op = [manager POST:url parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
-    [self successResponse:responseObject callback:success];
-    
-    if ([self isDebug]) {
-      [self logWithSuccessResponse:responseObject url:operation.response.URL.absoluteString params:params];
-    }
-  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-    if (fail) {
-      fail(error);
-    }
-    
-    if ([self isDebug]) {
-      [self logWithFailError:error url:operation.response.URL.absoluteString params:params];
-    }
-  }];
-  
-  return op;
-}
-
-+ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
-                                     url:(NSString *)url
-                                filename:(NSString *)filename
-                                    name:(NSString *)name
-                                 success:(HYBResponseSuccess)success
-                                    fail:(HYBResponseFail)fail {
-  return [self uploadWithImage:image
-                           url:url
-                      filename:filename
-                          name:name
-                      progress:nil
-                       success:success
-                          fail:fail];
-}
-
-+ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
-                                     url:(NSString *)url
-                                filename:(NSString *)filename
-                                    name:(NSString *)name
-                              parameters:(NSDictionary *)parameters
-                                 success:(HYBResponseSuccess)success
-                                    fail:(HYBResponseFail)fail {
-  return [self uploadWithImage:image
-                           url:url
-                      filename:filename
-                          name:name
-                    parameters:parameters
-                      progress:nil
-                       success:success
-                          fail:fail];
-}
-
-+ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
-                                     url:(NSString *)url
-                                filename:(NSString *)filename
-                                    name:(NSString *)name
-                                progress:(HYBUploadProgress)progress
-                                 success:(HYBResponseSuccess)success
-                                    fail:(HYBResponseFail)fail {
-  return [self uploadWithImage:image
-                           url:url
-                      filename:filename
-                          name:name
-                    parameters:nil
++ (HYBURLSessionTask *)getWithUrl:(NSString *)url
+                           params:(NSDictionary *)params
+                         progress:(HYBGetProgress)progress
+                          success:(HYBResponseSuccess)success
+                             fail:(HYBResponseFail)fail {
+  return [self _requestWithUrl:url
+                     httpMedth:1
+                        params:params
                       progress:progress
                        success:success
                           fail:fail];
 }
 
-+ (HYBRequestOperation *)uploadWithImage:(UIImage *)image
-                                     url:(NSString *)url
-                                filename:(NSString *)filename
-                                    name:(NSString *)name
-                              parameters:(NSDictionary *)parameters
-                                progress:(HYBUploadProgress)progress
-                                 success:(HYBResponseSuccess)success
-                                    fail:(HYBResponseFail)fail {
++ (HYBURLSessionTask *)postWithUrl:(NSString *)url
+                            params:(NSDictionary *)params
+                           success:(HYBResponseSuccess)success
+                              fail:(HYBResponseFail)fail {
+  return [self postWithUrl:url params:params progress:nil success:success fail:fail];
+}
+
++ (HYBURLSessionTask *)postWithUrl:(NSString *)url
+                            params:(NSDictionary *)params
+                          progress:(HYBPostProgress)progress
+                           success:(HYBResponseSuccess)success
+                              fail:(HYBResponseFail)fail {
+  return [self _requestWithUrl:url
+                     httpMedth:2
+                        params:params
+                      progress:progress
+                       success:success
+                          fail:fail];
+}
+
++ (HYBURLSessionTask *)_requestWithUrl:(NSString *)url
+                             httpMedth:(NSUInteger)httpMethod
+                                params:(NSDictionary *)params
+                              progress:(HYBDownloadProgress)progress
+                               success:(HYBResponseSuccess)success
+                                  fail:(HYBResponseFail)fail {
+  AFHTTPSessionManager *manager = [self manager];
+  
+  if ([self baseUrl] == nil) {
+    if ([NSURL URLWithString:url] == nil) {
+      HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
+      return nil;
+    }
+  } else {
+    if ([NSURL URLWithString:[NSString stringWithFormat:@"%@%@", [self baseUrl], url]] == nil) {
+      HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
+      return nil;
+    }
+  }
+  
   if ([self shouldEncode]) {
     url = [self encodeUrl:url];
   }
   
-  AFHTTPRequestOperationManager *manager = [self manager];
-  AFHTTPRequestOperation *op = [manager POST:url parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+  HYBURLSessionTask *session = nil;
+  
+  if (httpMethod == 1) {
+    session = [manager GET:url parameters:params progress:^(NSProgress * _Nonnull downloadProgress) {
+      if (progress) {
+        progress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
+      }
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+      [self successResponse:responseObject callback:success];
+      
+      if ([self isDebug]) {
+        [self logWithSuccessResponse:responseObject
+                                 url:task.response.URL.absoluteString
+                              params:params];
+      }
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+      if (fail) {
+        fail(error);
+      }
+      
+      if ([self isDebug]) {
+        [self logWithFailError:error url:task.response.URL.absoluteString params:params];
+      }
+    }];
+  } else if (httpMethod == 2) {
+    session = [manager POST:url parameters:params progress:^(NSProgress * _Nonnull downloadProgress) {
+      if (progress) {
+        progress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
+      }
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+      [self successResponse:responseObject callback:success];
+      
+      if ([self isDebug]) {
+        [self logWithSuccessResponse:responseObject
+                                 url:task.response.URL.absoluteString
+                              params:params];
+      }
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+      if (fail) {
+        fail(error);
+      }
+      
+      if ([self isDebug]) {
+        [self logWithFailError:error url:task.response.URL.absoluteString params:params];
+      }
+    }];
+  }
+  
+  return session;
+}
+
++ (HYBURLSessionTask *)uploadFileWithUrl:(NSString *)url
+                           uploadingFile:(NSString *)uploadingFile
+                                progress:(HYBUploadProgress)progress
+                                 success:(HYBResponseSuccess)success
+                                    fail:(HYBResponseFail)fail {
+  if ([NSURL URLWithString:uploadingFile] == nil) {
+    HYBAppLog(@"uploadingFile无效，无法生成URL。请检查待上传文件是否存在");
+    return nil;
+  }
+  
+  NSURL *uploadURL = nil;
+  if ([self baseUrl] == nil) {
+    uploadURL = [NSURL URLWithString:url];
+  } else {
+    uploadURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@", [self baseUrl], url]];
+  }
+  
+  if (uploadURL == nil) {
+    HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文或特殊字符，请尝试Encode URL");
+    return nil;
+  }
+  
+  if ([self shouldEncode]) {
+    url = [self encodeUrl:url];
+  }
+  
+  AFHTTPSessionManager *manager = [self manager];
+  NSURLRequest *request = [NSURLRequest requestWithURL:uploadURL];
+  HYBURLSessionTask *session = [manager uploadTaskWithRequest:request fromFile:[NSURL URLWithString:uploadingFile] progress:^(NSProgress * _Nonnull uploadProgress) {
+    if (progress) {
+      progress(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
+    }
+  } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    [self successResponse:responseObject callback:success];
+    
+    if (error) {
+      if (fail) {
+        fail(error);
+      }
+      
+      if ([self isDebug]) {
+        [self logWithFailError:error url:response.URL.absoluteString params:nil];
+      }
+    } else {
+      if ([self isDebug]) {
+        [self logWithSuccessResponse:responseObject
+                                 url:response.URL.absoluteString
+                              params:nil];
+      }
+    }
+  }];
+  
+  return session;
+}
+
++ (HYBURLSessionTask *)uploadWithImage:(UIImage *)image
+                                   url:(NSString *)url
+                              filename:(NSString *)filename
+                                  name:(NSString *)name
+                              mimeType:(NSString *)mimeType
+                            parameters:(NSDictionary *)parameters
+                              progress:(HYBUploadProgress)progress
+                               success:(HYBResponseSuccess)success
+                                  fail:(HYBResponseFail)fail {
+  if ([self baseUrl] == nil) {
+    if ([NSURL URLWithString:url] == nil) {
+      HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
+      return nil;
+    }
+  } else {
+    if ([NSURL URLWithString:[NSString stringWithFormat:@"%@%@", [self baseUrl], url]] == nil) {
+      HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
+      return nil;
+    }
+  }
+  
+  if ([self shouldEncode]) {
+    url = [self encodeUrl:url];
+  }
+  
+  AFHTTPSessionManager *manager = [self manager];
+  HYBURLSessionTask *session = [manager POST:url parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
     NSData *imageData = UIImageJPEGRepresentation(image, 1);
     
     NSString *imageFileName = filename;
@@ -200,67 +277,77 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     }
     
     // 上传图片，以文件流的格式
-    [formData appendPartWithFileData:imageData name:name fileName:imageFileName mimeType:@"image/jpeg"];
-  } success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    [formData appendPartWithFileData:imageData name:name fileName:imageFileName mimeType:mimeType];
+  } progress:^(NSProgress * _Nonnull uploadProgress) {
+    if (progress) {
+      progress(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
+    }
+  } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
     [self successResponse:responseObject callback:success];
     
     if ([self isDebug]) {
-      [self logWithSuccessResponse:responseObject url:operation.response.URL.absoluteString params:nil];
+      [self logWithSuccessResponse:responseObject
+                               url:task.response.URL.absoluteString
+                            params:parameters];
     }
-  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+  } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
     if (fail) {
       fail(error);
     }
     
     if ([self isDebug]) {
-      [self logWithFailError:error url:operation.response.URL.absoluteString params:nil];
+      [self logWithFailError:error url:task.response.URL.absoluteString params:nil];
     }
   }];
   
-  if (progress) {
-    [op setUploadProgressBlock:progress];
-  }
-  
-  return op;
+  return session;
 }
 
-+ (HYBRequestOperation *)downloadWithUrl:(NSString *)url
-             saveToPath:(NSString *)saveToPath
-               progress:(HYBDownloadProgress)progressBlock
-                success:(HYBResponseSuccess)success
-                failure:(HYBResponseFail)failure {
-  NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-  HYBRequestOperation *op = [[AFHTTPRequestOperation alloc] initWithRequest:downloadRequest];
-  
-  op.outputStream = [NSOutputStream outputStreamToFileAtPath:saveToPath append:NO];
-  [op setDownloadProgressBlock:progressBlock];
-  
-  [op setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
-    if (success) {
-      // 将下载后的文件路径返回
-      success(saveToPath);
++ (HYBURLSessionTask *)downloadWithUrl:(NSString *)url
+                            saveToPath:(NSString *)saveToPath
+                              progress:(HYBDownloadProgress)progressBlock
+                               success:(HYBResponseSuccess)success
+                               failure:(HYBResponseFail)failure {
+  if ([self baseUrl] == nil) {
+    if ([NSURL URLWithString:url] == nil) {
+      HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
+      return nil;
     }
-  } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-    if (failure) {
-      failure(error);
+  } else {
+    if ([NSURL URLWithString:[NSString stringWithFormat:@"%@%@", [self baseUrl], url]] == nil) {
+      HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
+      return nil;
+    }
+  }
+  
+  NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+  AFHTTPSessionManager *manager = [self manager];
+  
+  HYBURLSessionTask *session = [manager downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
+    if (progressBlock) {
+      progressBlock(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
+    }
+  } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
+    return [NSURL URLWithString:saveToPath];
+  } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
+    if (success) {
+      success(filePath.absoluteString);
     }
   }];
   
-  [op start];
- 
-  return op;
+  return session;
 }
 
 #pragma mark - Private
-+ (AFHTTPRequestOperationManager *)manager {
++ (AFHTTPSessionManager *)manager {
   // 开启转圈圈
   [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
   
-  AFHTTPRequestOperationManager *manager = nil;;
+  AFHTTPSessionManager *manager = nil;;
   if ([self baseUrl] != nil) {
-    manager = [[AFHTTPRequestOperationManager alloc] initWithBaseURL:[NSURL URLWithString:[self baseUrl]]];
+    manager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:[self baseUrl]]];
   } else {
-    manager = [AFHTTPRequestOperationManager manager];
+    manager = [AFHTTPSessionManager manager];
   }
   
   switch (sg_requestType) {
@@ -320,20 +407,64 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
 
 + (void)logWithSuccessResponse:(id)response url:(NSString *)url params:(NSDictionary *)params {
   HYBAppLog(@"\nabsoluteUrl: %@\n params:%@\n response:%@\n\n",
-            url,
+            [self generateGETAbsoluteURL:url params:params],
             params,
             [self tryToParseData:response]);
 }
 
 + (void)logWithFailError:(NSError *)error url:(NSString *)url params:(NSDictionary *)params {
   HYBAppLog(@"\nabsoluteUrl: %@\n params:%@\n errorInfos:%@\n\n",
-            url,
+            [self generateGETAbsoluteURL:url params:params],
             params,
             [error localizedDescription]);
 }
 
+// 仅对一级字典结构起作用
++ (NSString *)generateGETAbsoluteURL:(NSString *)url params:(NSDictionary *)params {
+  if (params.count == 0) {
+    return url;
+  }
+  
+  NSString *queries = @"";
+  for (NSString *key in params) {
+    id value = [params objectForKey:key];
+    
+    if ([value isKindOfClass:[NSDictionary class]]) {
+      continue;
+    } else if ([value isKindOfClass:[NSArray class]]) {
+      continue;
+    } else if ([value isKindOfClass:[NSSet class]]) {
+      continue;
+    } else {
+      queries = [NSString stringWithFormat:@"%@%@=%@&",
+                 (queries.length == 0 ? @"&" : queries),
+                 key,
+                 value];
+    }
+  }
+  
+  if (queries.length > 1) {
+    queries = [queries substringToIndex:queries.length - 1];
+  }
+  
+  if (([url rangeOfString:@"http://"].location != NSNotFound
+      || [url rangeOfString:@"https://"].location != NSNotFound)
+      && queries.length > 1) {
+    if ([url rangeOfString:@"?"].location != NSNotFound
+        || [url rangeOfString:@"#"].location != NSNotFound) {
+      url = [NSString stringWithFormat:@"%@%@", url, queries];
+    } else {
+      queries = [queries substringFromIndex:1];
+      url = [NSString stringWithFormat:@"%@?%@", url, queries];
+    }
+  }
+  
+  return url.length == 0 ? queries : url;
+}
+
+
 + (NSString *)encodeUrl:(NSString *)url {
-  return [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+  return [self hyb_URLEncode:url];
 }
 
 + (id)tryToParseData:(id)responseData {
@@ -362,6 +493,19 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   if (success) {
     success([self tryToParseData:responseData]);
   }
+}
+
++ (NSString *)hyb_URLEncode:(NSString *)url {
+  NSString *newString =
+  CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                            (CFStringRef)url,
+                                                            NULL,
+                                                            CFSTR(":/?#[]@!$ &'()*+,;=\"<>%{}|\\^~`"), CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding)));
+  if (newString) {
+    return newString;
+  }
+  
+  return url;
 }
 
 @end

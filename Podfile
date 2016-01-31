@@ -3,6 +3,6 @@ inhibit_all_warnings!
 
 target "AFNetworkingDemo" do
 
-pod 'AFNetworking', '~> 2.5.2'
+pod 'AFNetworking', '~> 3.0.4'
 
 end
