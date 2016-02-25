@@ -39,7 +39,9 @@ pod 'HYBNetworking', '~>1.1.3'
 ```
 
 #文章讲解
-笔者的个人博客发表的讲解的文章：[http://www.henishuo.com/base-on-afnetworking-wrapper/](http://www.henishuo.com/base-on-afnetworking-wrapper/)
+笔者的个人博客发表的讲解的文章：[基于AFNetworkgin2.5.2的网络封装](http://www.henishuo.com/base-on-afnetworking-wrapper/)
+
+另外，最新更新到基于AFN3.0版本的，请阅读：[基于AFNetworking3.0的网络封装](http://www.henishuo.com/base-on-afnetworking3-0-wrapper/)
 
 #关注我
 
