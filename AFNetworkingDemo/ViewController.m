@@ -17,6 +17,7 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
+
   
   // 通常放在appdelegate就可以了
   [HYBNetworking updateBaseUrl:@"http://apistore.baidu.com"];

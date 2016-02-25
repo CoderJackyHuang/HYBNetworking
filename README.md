@@ -24,6 +24,10 @@
 * 升级AFNetworking到3.0，基于AFNetworking3.0.4而写的版本
 * 支持iOS7.0及其以上版本
 
+#version 2.0.1
+
+* fix pod安装2.0.0却是1.1.3版本的问题
+
 ```
 pod 'HYBNetworking', '~>2.0.0'
 ```
