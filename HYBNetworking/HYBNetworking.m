@@ -7,16 +7,36 @@
 //
 
 #import "HYBNetworking.h"
-#import "AFNetworking.h"
-#import "AFNetworkActivityIndicatorManager.h"
-#import "AFHTTPSessionManager.h"
+#import <AFNetworkActivityIndicatorManager.h>
+#import <AFNetworking.h>
+#import <AFHTTPSessionManager.h>
+#import <CommonCrypto/CommonDigest.h>
 
-// 项目打包上线都不会打印日志，因此可放心。
-#ifdef DEBUG
-#define HYBAppLog(s, ... ) NSLog( @"[%@：in line: %d]-->%@", [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, [NSString stringWithFormat:(s), ##__VA_ARGS__] )
-#else
-#define HYBAppLog(s, ... )
-#endif
+@interface NSString (md5)
+
++ (NSString *)hybnetworking_md5:(NSString *)string;
+
+@end
+
+@implementation NSString (md5)
+
++ (NSString *)hybnetworking_md5:(NSString *)string {
+  if (string == nil || [string length] == 0) {
+    return nil;
+  }
+  
+  unsigned char digest[CC_MD5_DIGEST_LENGTH], i;
+  CC_MD5([string UTF8String], (int)[string lengthOfBytesUsingEncoding:NSUTF8StringEncoding], digest);
+  NSMutableString *ms = [NSMutableString string];
+  
+  for (i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
+    [ms appendFormat:@"%02x", (int)(digest[i])];
+  }
+  
+  return [ms copy];
+}
+
+@end
 
 static NSString *sg_privateNetworkBaseUrl = nil;
 static BOOL sg_isEnableInterfaceDebug = NO;
@@ -24,8 +44,17 @@ static BOOL sg_shouldAutoEncode = NO;
 static NSDictionary *sg_httpHeaders = nil;
 static HYBResponseType sg_responseType = kHYBResponseTypeJSON;
 static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
+static NSMutableArray *sg_requestTasks;
+static BOOL sg_cacheGet = YES;
+static BOOL sg_cachePost = NO;
+static BOOL sg_shouldCallbackOnCancelRequest = YES;
 
 @implementation HYBNetworking
+
++ (void)cacheGetRequest:(BOOL)isCacheGet shoulCachePost:(BOOL)shouldCachePost {
+  sg_cacheGet = isCacheGet;
+  sg_cachePost = shouldCachePost;
+}
 
 + (void)updateBaseUrl:(NSString *)baseUrl {
   sg_privateNetworkBaseUrl = baseUrl;
@@ -43,16 +72,99 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   return sg_isEnableInterfaceDebug;
 }
 
-+ (void)configResponseType:(HYBResponseType)responseType {
-  sg_responseType = responseType;
+static inline NSString *cachePath() {
+  return [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/HYBNetworkingCaches"];
 }
 
-+ (void)configRequestType:(HYBRequestType)requestType {
++ (void)clearCaches {
+  NSString *directoryPath = cachePath();
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath:directoryPath isDirectory:nil]) {
+    NSError *error = nil;
+    [[NSFileManager defaultManager] removeItemAtPath:directoryPath error:&error];
+    
+    if (error) {
+      NSLog(@"HYBNetworking clear caches error: %@", error);
+    } else {
+      NSLog(@"HYBNetworking clear caches ok");
+    }
+  }
+}
+
++ (unsigned long long)totalCacheSize {
+  NSString *directoryPath = cachePath();
+  BOOL isDir = NO;
+  unsigned long long total = 0;
+  
+  if ([[NSFileManager defaultManager] fileExistsAtPath:directoryPath isDirectory:&isDir]) {
+    if (isDir) {
+      NSError *error = nil;
+      NSArray *array = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:directoryPath error:&error];
+      
+      if (error == nil) {
+        for (NSString *subpath in array) {
+          NSString *path = [directoryPath stringByAppendingPathComponent:subpath];
+          NSDictionary *dict = [[NSFileManager defaultManager] attributesOfItemAtPath:path
+                                                                                error:&error];
+          if (!error) {
+            total += [dict[NSFileSize] unsignedIntegerValue];
+          }
+        }
+      }
+    }
+  }
+  
+  return total;
+}
+
++ (NSMutableArray *)allTasks {
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    if (sg_requestTasks == nil) {
+      sg_requestTasks = [[NSMutableArray alloc] init];
+    }
+  });
+  
+  return sg_requestTasks;
+}
+
++ (void)cancelAllRequest {
+  @synchronized(self) {
+    [[self allTasks] enumerateObjectsUsingBlock:^(HYBURLSessionTask * _Nonnull task, NSUInteger idx, BOOL * _Nonnull stop) {
+      if ([task isKindOfClass:[HYBURLSessionTask class]]) {
+        [task cancel];
+      }
+    }];
+    
+    [[self allTasks] removeAllObjects];
+  };
+}
+
++ (void)cancelRequestWithURL:(NSString *)url {
+  if (url == nil) {
+    return;
+  }
+  
+  @synchronized(self) {
+    [[self allTasks] enumerateObjectsUsingBlock:^(HYBURLSessionTask * _Nonnull task, NSUInteger idx, BOOL * _Nonnull stop) {
+      if ([task isKindOfClass:[HYBURLSessionTask class]]
+          && [task.currentRequest.URL.absoluteString hasSuffix:url]) {
+        [task cancel];
+        [[self allTasks] removeObject:task];
+        return;
+      }
+    }];
+  };
+}
+
++ (void)configRequestType:(HYBRequestType)requestType
+             responseType:(HYBResponseType)responseType
+      shouldAutoEncodeUrl:(BOOL)shouldAutoEncode
+  callbackOnCancelRequest:(BOOL)shouldCallbackOnCancelRequest {
   sg_requestType = requestType;
-}
-
-+ (void)shouldAutoEncodeUrl:(BOOL)shouldAutoEncode {
+  sg_responseType = responseType;
   sg_shouldAutoEncode = shouldAutoEncode;
+  sg_shouldCallbackOnCancelRequest = shouldCallbackOnCancelRequest;
 }
 
 + (BOOL)shouldEncode {
@@ -64,24 +176,37 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
 }
 
 + (HYBURLSessionTask *)getWithUrl:(NSString *)url
+                     refreshCache:(BOOL)refreshCache
                           success:(HYBResponseSuccess)success
                              fail:(HYBResponseFail)fail {
-  return [self getWithUrl:url params:nil success:success fail:fail];
+  return [self getWithUrl:url
+             refreshCache:refreshCache
+                   params:nil
+                  success:success
+                     fail:fail];
 }
 
 + (HYBURLSessionTask *)getWithUrl:(NSString *)url
+                     refreshCache:(BOOL)refreshCache
                            params:(NSDictionary *)params
                           success:(HYBResponseSuccess)success
                              fail:(HYBResponseFail)fail {
-  return [self getWithUrl:url params:params progress:nil success:success fail:fail];
+  return [self getWithUrl:url
+             refreshCache:refreshCache
+                   params:params
+                 progress:nil
+                  success:success
+                     fail:fail];
 }
 
 + (HYBURLSessionTask *)getWithUrl:(NSString *)url
+                     refreshCache:(BOOL)refreshCache
                            params:(NSDictionary *)params
                          progress:(HYBGetProgress)progress
                           success:(HYBResponseSuccess)success
                              fail:(HYBResponseFail)fail {
   return [self _requestWithUrl:url
+                  refreshCache:refreshCache
                      httpMedth:1
                         params:params
                       progress:progress
@@ -90,18 +215,26 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
 }
 
 + (HYBURLSessionTask *)postWithUrl:(NSString *)url
+                      refreshCache:(BOOL)refreshCache
                             params:(NSDictionary *)params
                            success:(HYBResponseSuccess)success
                               fail:(HYBResponseFail)fail {
-  return [self postWithUrl:url params:params progress:nil success:success fail:fail];
+  return [self postWithUrl:url
+              refreshCache:refreshCache
+                    params:params
+                  progress:nil
+                   success:success
+                      fail:fail];
 }
 
 + (HYBURLSessionTask *)postWithUrl:(NSString *)url
+                      refreshCache:(BOOL)refreshCache
                             params:(NSDictionary *)params
                           progress:(HYBPostProgress)progress
                            success:(HYBResponseSuccess)success
                               fail:(HYBResponseFail)fail {
   return [self _requestWithUrl:url
+                  refreshCache:refreshCache
                      httpMedth:2
                         params:params
                       progress:progress
@@ -110,12 +243,14 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
 }
 
 + (HYBURLSessionTask *)_requestWithUrl:(NSString *)url
+                          refreshCache:(BOOL)refreshCache
                              httpMedth:(NSUInteger)httpMethod
                                 params:(NSDictionary *)params
                               progress:(HYBDownloadProgress)progress
                                success:(HYBResponseSuccess)success
                                   fail:(HYBResponseFail)fail {
   AFHTTPSessionManager *manager = [self manager];
+  NSString *absolute = [self absoluteUrlWithPath:url];
   
   if ([self baseUrl] == nil) {
     if ([NSURL URLWithString:url] == nil) {
@@ -123,7 +258,9 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
       return nil;
     }
   } else {
-    if ([NSURL URLWithString:[NSString stringWithFormat:@"%@%@", [self baseUrl], url]] == nil) {
+      NSURL *absouluteURL = [NSURL URLWithString:absolute];
+
+    if (absouluteURL == nil) {
       HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
       return nil;
     }
@@ -136,6 +273,24 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   HYBURLSessionTask *session = nil;
   
   if (httpMethod == 1) {
+    if (sg_cacheGet && !refreshCache) {// 获取缓存
+      id response = [HYBNetworking cahceResponseWithURL:absolute
+                                             parameters:params];
+      if (response) {
+        if (success) {
+          [self successResponse:response callback:success];
+          
+          if ([self isDebug]) {
+            [self logWithSuccessResponse:response
+                                     url:absolute
+                                  params:params];
+          }
+        }
+        
+        return nil;
+      }
+    }
+    
     session = [manager GET:url parameters:params progress:^(NSProgress * _Nonnull downloadProgress) {
       if (progress) {
         progress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
@@ -143,21 +298,46 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
       [self successResponse:responseObject callback:success];
       
+      if (sg_cacheGet) {
+        [self cacheResponseObject:responseObject request:task.currentRequest parameters:params];
+      }
+      
+      [[self allTasks] removeObject:task];
+      
       if ([self isDebug]) {
         [self logWithSuccessResponse:responseObject
-                                 url:task.response.URL.absoluteString
+                                 url:absolute
                               params:params];
       }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-      if (fail) {
-        fail(error);
-      }
+      [[self allTasks] removeObject:task];
+      
+      [self handleCallbackWithError:error fail:fail];
       
       if ([self isDebug]) {
-        [self logWithFailError:error url:task.response.URL.absoluteString params:params];
+        [self logWithFailError:error url:absolute params:params];
       }
     }];
   } else if (httpMethod == 2) {
+    if (sg_cachePost && !refreshCache) {// 获取缓存
+      id response = [HYBNetworking cahceResponseWithURL:absolute
+                                             parameters:params];
+      
+      if (response) {
+        if (success) {
+          [self successResponse:response callback:success];
+          
+          if ([self isDebug]) {
+            [self logWithSuccessResponse:response
+                                     url:absolute
+                                  params:params];
+          }
+        }
+        
+        return nil;
+      }
+    }
+    
     session = [manager POST:url parameters:params progress:^(NSProgress * _Nonnull downloadProgress) {
       if (progress) {
         progress(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
@@ -165,20 +345,30 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
       [self successResponse:responseObject callback:success];
       
+      if (sg_cachePost) {
+        [self cacheResponseObject:responseObject request:task.currentRequest  parameters:params];
+      }
+      
+      [[self allTasks] removeObject:task];
+      
       if ([self isDebug]) {
         [self logWithSuccessResponse:responseObject
-                                 url:task.response.URL.absoluteString
+                                 url:absolute
                               params:params];
       }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-      if (fail) {
-        fail(error);
-      }
+      [[self allTasks] removeObject:task];
+      
+      [self handleCallbackWithError:error fail:fail];
       
       if ([self isDebug]) {
-        [self logWithFailError:error url:task.response.URL.absoluteString params:params];
+        [self logWithFailError:error url:absolute params:params];
       }
     }];
+  }
+  
+  if (session) {
+    [[self allTasks] addObject:session];
   }
   
   return session;
@@ -217,12 +407,12 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
       progress(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
     }
   } completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    [[self allTasks] removeObject:session];
+    
     [self successResponse:responseObject callback:success];
     
     if (error) {
-      if (fail) {
-        fail(error);
-      }
+      [self handleCallbackWithError:error fail:fail];
       
       if ([self isDebug]) {
         [self logWithFailError:error url:response.URL.absoluteString params:nil];
@@ -235,6 +425,10 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
       }
     }
   }];
+  
+  if (session) {
+    [[self allTasks] addObject:session];
+  }
   
   return session;
 }
@@ -264,6 +458,8 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     url = [self encodeUrl:url];
   }
   
+  NSString *absolute = [self absoluteUrlWithPath:url];
+
   AFHTTPSessionManager *manager = [self manager];
   HYBURLSessionTask *session = [manager POST:url parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
     NSData *imageData = UIImageJPEGRepresentation(image, 1);
@@ -283,22 +479,27 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
       progress(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
     }
   } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+    [[self allTasks] removeObject:task];
     [self successResponse:responseObject callback:success];
     
     if ([self isDebug]) {
       [self logWithSuccessResponse:responseObject
-                               url:task.response.URL.absoluteString
+                               url:absolute
                             params:parameters];
     }
   } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-    if (fail) {
-      fail(error);
-    }
+    [[self allTasks] removeObject:task];
+    
+    [self handleCallbackWithError:error fail:fail];
     
     if ([self isDebug]) {
-      [self logWithFailError:error url:task.response.URL.absoluteString params:nil];
+      [self logWithFailError:error url:absolute params:nil];
     }
   }];
+  
+  if (session) {
+    [[self allTasks] addObject:session];
+  }
   
   return session;
 }
@@ -330,10 +531,30 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
     return [NSURL URLWithString:saveToPath];
   } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-    if (success) {
-      success(filePath.absoluteString);
+    [[self allTasks] removeObject:session];
+    
+    NSString *absolute = [self absoluteUrlWithPath:url];
+
+    if (error == nil) {
+      if (success) {
+        success(filePath.absoluteString);
+      }
+      
+      if ([self isDebug]) {
+        HYBAppLog(@"Download success for url: %@", absolute);
+      }
+    } else {
+      [self handleCallbackWithError:error fail:failure];
+      
+      if ([self isDebug]) {
+        HYBAppLog(@"Download success for url: %@", absolute);
+      }
     }
   }];
+  
+  if (session) {
+    [[self allTasks] addObject:session];
+  }
   
   return session;
 }
@@ -353,8 +574,6 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   switch (sg_requestType) {
     case kHYBRequestTypeJSON: {
       manager.requestSerializer = [AFJSONRequestSerializer serializer];
-      [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Accept"];
-      [manager.requestSerializer setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
       break;
     }
     case kHYBRequestTypePlainText: {
@@ -406,22 +625,38 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
 }
 
 + (void)logWithSuccessResponse:(id)response url:(NSString *)url params:(NSDictionary *)params {
-  HYBAppLog(@"\nabsoluteUrl: %@\n params:%@\n response:%@\n\n",
+  HYBAppLog(@"\n");
+  HYBAppLog(@"\nRequest success, URL: %@\n params:%@\n response:%@\n\n",
             [self generateGETAbsoluteURL:url params:params],
             params,
             [self tryToParseData:response]);
 }
 
-+ (void)logWithFailError:(NSError *)error url:(NSString *)url params:(NSDictionary *)params {
-  HYBAppLog(@"\nabsoluteUrl: %@\n params:%@\n errorInfos:%@\n\n",
-            [self generateGETAbsoluteURL:url params:params],
-            params,
-            [error localizedDescription]);
++ (void)logWithFailError:(NSError *)error url:(NSString *)url params:(id)params {
+  NSString *format = @" params: ";
+  if (params == nil || ![params isKindOfClass:[NSDictionary class]]) {
+    format = @"";
+    params = @"";
+  }
+  
+  HYBAppLog(@"\n");
+  if ([error code] == NSURLErrorCancelled) {
+    HYBAppLog(@"\nRequest was canceled mannully, URL: %@ %@%@\n\n",
+              [self generateGETAbsoluteURL:url params:params],
+              format,
+              params);
+  } else {
+    HYBAppLog(@"\nRequest error, URL: %@ %@%@\n errorInfos:%@\n\n",
+              [self generateGETAbsoluteURL:url params:params],
+              format,
+              params,
+              [error localizedDescription]);
+  }
 }
 
 // 仅对一级字典结构起作用
-+ (NSString *)generateGETAbsoluteURL:(NSString *)url params:(NSDictionary *)params {
-  if (params.count == 0) {
++ (NSString *)generateGETAbsoluteURL:(NSString *)url params:(id)params {
+  if (params == nil || ![params isKindOfClass:[NSDictionary class]] || [params count] == 0) {
     return url;
   }
   
@@ -447,9 +682,7 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
     queries = [queries substringToIndex:queries.length - 1];
   }
   
-  if (([url rangeOfString:@"http://"].location != NSNotFound
-      || [url rangeOfString:@"https://"].location != NSNotFound)
-      && queries.length > 1) {
+  if (([url hasPrefix:@"http://"] || [url hasPrefix:@"https://"]) && queries.length > 1) {
     if ([url rangeOfString:@"?"].location != NSNotFound
         || [url rangeOfString:@"#"].location != NSNotFound) {
       url = [NSString stringWithFormat:@"%@%@", url, queries];
@@ -506,6 +739,101 @@ static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
   }
   
   return url;
+}
+
++ (id)cahceResponseWithURL:(NSString *)url parameters:params {
+  id cacheData = nil;
+  
+  if (url) {
+    // Try to get datas from disk
+    NSString *directoryPath = cachePath();
+    NSString *absoluteURL = [self generateGETAbsoluteURL:url params:params];
+    NSString *key = [NSString hybnetworking_md5:absoluteURL];
+    NSString *path = [directoryPath stringByAppendingPathComponent:key];
+    
+    NSData *data = [[NSFileManager defaultManager] contentsAtPath:path];
+    if (data) {
+      cacheData = data;
+      HYBAppLog(@"Read data from cache for url: %@\n", url);
+    }
+  }
+  
+  return cacheData;
+}
+
++ (void)cacheResponseObject:(id)responseObject request:(NSURLRequest *)request parameters:params {
+  if (request && responseObject && ![responseObject isKindOfClass:[NSNull class]]) {
+    NSString *directoryPath = cachePath();
+    
+    NSError *error = nil;
+    
+    if (![[NSFileManager defaultManager] fileExistsAtPath:directoryPath isDirectory:nil]) {
+      [[NSFileManager defaultManager] createDirectoryAtPath:directoryPath
+                                withIntermediateDirectories:YES
+                                                 attributes:nil
+                                                      error:&error];
+      if (error) {
+        HYBAppLog(@"create cache dir error: %@\n", error);
+        return;
+      }
+    }
+    
+    NSString *absoluteURL = [self generateGETAbsoluteURL:request.URL.absoluteString params:params];
+    NSString *key = [NSString hybnetworking_md5:absoluteURL];
+    NSString *path = [directoryPath stringByAppendingPathComponent:key];
+    NSDictionary *dict = (NSDictionary *)responseObject;
+    
+    NSData *data = nil;
+    if ([dict isKindOfClass:[NSData class]]) {
+      data = responseObject;
+    } else {
+      data = [NSJSONSerialization dataWithJSONObject:dict
+                                             options:NSJSONWritingPrettyPrinted
+                                               error:&error];
+    }
+    
+    if (data && error == nil) {
+      BOOL isOk = [[NSFileManager defaultManager] createFileAtPath:path contents:data attributes:nil];
+      if (isOk) {
+        HYBAppLog(@"cache file ok for request: %@\n", absoluteURL);
+      } else {
+        HYBAppLog(@"cache file error for request: %@\n", absoluteURL);
+      }
+    }
+  }
+}
+
++ (NSString *)absoluteUrlWithPath:(NSString *)path {
+  if (path == nil || path.length == 0) {
+    return @"";
+  }
+  
+  if ([self baseUrl] == nil || [[self baseUrl] length] == 0) {
+    return path;
+  }
+  
+  NSString *absoluteUrl = path;
+  
+  if (![path hasPrefix:@"http://"] && ![path hasPrefix:@"https://"]) {
+    absoluteUrl = [NSString stringWithFormat:@"%@%@",
+                                         [self baseUrl], path];
+  }
+  
+  return absoluteUrl;
+}
+
++ (void)handleCallbackWithError:(NSError *)error fail:(HYBResponseFail)fail {
+  if ([error code] == NSURLErrorCancelled) {
+    if (sg_shouldCallbackOnCancelRequest) {
+      if (fail) {
+        fail(error);
+      }
+    }
+  } else {
+    if (fail) {
+      fail(error);
+    }
+  }
 }
 
 @end
