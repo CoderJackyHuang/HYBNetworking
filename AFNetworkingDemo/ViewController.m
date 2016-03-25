@@ -76,7 +76,8 @@
   [HYBNetworking updateBaseUrl:@"http://data.zz.baidu.com"];
   // 每次刷新缓存
   // 如果获取到的业务数据是不正确的，则需要下次调用时设置为YES,表示要刷新缓存
- HYBURLSessionTask *task = [HYBNetworking postWithUrl:path refreshCache:YES params:postDict success:^(id response) {
+// HYBURLSessionTask *task =
+  [HYBNetworking postWithUrl:path refreshCache:YES params:postDict success:^(id response) {
     
   } fail:^(NSError *error) {
     

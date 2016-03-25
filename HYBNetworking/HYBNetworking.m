@@ -10,6 +10,7 @@
 #import "AFNetworkActivityIndicatorManager.h"
 #import "AFNetworking.h"
 #import "AFHTTPSessionManager.h"
+
 #import <CommonCrypto/CommonDigest.h>
 
 @interface NSString (md5)
@@ -402,7 +403,9 @@ static inline NSString *cachePath() {
   
   AFHTTPSessionManager *manager = [self manager];
   NSURLRequest *request = [NSURLRequest requestWithURL:uploadURL];
-  HYBURLSessionTask *session = [manager uploadTaskWithRequest:request fromFile:[NSURL URLWithString:uploadingFile] progress:^(NSProgress * _Nonnull uploadProgress) {
+  HYBURLSessionTask *session = nil;
+  
+  [manager uploadTaskWithRequest:request fromFile:[NSURL URLWithString:uploadingFile] progress:^(NSProgress * _Nonnull uploadProgress) {
     if (progress) {
       progress(uploadProgress.completedUnitCount, uploadProgress.totalUnitCount);
     }
@@ -524,7 +527,9 @@ static inline NSString *cachePath() {
   NSURLRequest *downloadRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
   AFHTTPSessionManager *manager = [self manager];
   
-  HYBURLSessionTask *session = [manager downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
+  HYBURLSessionTask *session = nil;
+  
+  session = [manager downloadTaskWithRequest:downloadRequest progress:^(NSProgress * _Nonnull downloadProgress) {
     if (progressBlock) {
       progressBlock(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
     }
