@@ -7,9 +7,9 @@
 //
 
 #import "HYBNetworking.h"
-#import <AFNetworkActivityIndicatorManager.h>
-#import <AFNetworking.h>
-#import <AFHTTPSessionManager.h>
+#import "AFNetworkActivityIndicatorManager.h"
+#import "AFNetworking.h"
+#import "AFHTTPSessionManager.h"
 #import <CommonCrypto/CommonDigest.h>
 
 @interface NSString (md5)
