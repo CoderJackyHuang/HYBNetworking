@@ -544,15 +544,13 @@ static inline NSString *cachePath() {
       }
       
       if ([self isDebug]) {
-        NSString *absolute = [self absoluteUrlWithPath:url];
-        HYBAppLog(@"Download success for url: %@", absolute);
+        HYBAppLog(@"Download success for url: %@", [self absoluteUrlWithPath:url]);
       }
     } else {
       [self handleCallbackWithError:error fail:failure];
       
       if ([self isDebug]) {
-        NSString *absolute = [self absoluteUrlWithPath:url];
-        HYBAppLog(@"Download success for url: %@", absolute);
+        HYBAppLog(@"Download success for url: %@", [self absoluteUrlWithPath:url]);
       }
     }
   }];
