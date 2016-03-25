@@ -538,20 +538,20 @@ static inline NSString *cachePath() {
   } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
     [[self allTasks] removeObject:session];
     
-    NSString *absolute = [self absoluteUrlWithPath:url];
-
     if (error == nil) {
       if (success) {
         success(filePath.absoluteString);
       }
       
       if ([self isDebug]) {
+        NSString *absolute = [self absoluteUrlWithPath:url];
         HYBAppLog(@"Download success for url: %@", absolute);
       }
     } else {
       [self handleCallbackWithError:error fail:failure];
       
       if ([self isDebug]) {
+        NSString *absolute = [self absoluteUrlWithPath:url];
         HYBAppLog(@"Download success for url: %@", absolute);
       }
     }
