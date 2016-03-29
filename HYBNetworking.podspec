@@ -14,6 +14,6 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/CoderJackyHuang/HYBNetworking.git", :tag => "3.1.0" }
   s.source_files  = "HYBNetworking", "*.{h,m}"
   s.requires_arc = true
-  s.dependency "AFNetworking", "~> 3.1.0"
+  s.dependency "AFNetworking", "~> 3.0.0"
 
 end
