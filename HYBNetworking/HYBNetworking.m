@@ -500,6 +500,7 @@ static inline NSString *cachePath() {
     }
   }];
   
+  [session resume];
   if (session) {
     [[self allTasks] addObject:session];
   }
@@ -544,17 +545,21 @@ static inline NSString *cachePath() {
       }
       
       if ([self isDebug]) {
-        HYBAppLog(@"Download success for url: %@", [self absoluteUrlWithPath:url]);
+        HYBAppLog(@"Download success for url %@",
+                  [self absoluteUrlWithPath:url]);
       }
     } else {
       [self handleCallbackWithError:error fail:failure];
       
       if ([self isDebug]) {
-        HYBAppLog(@"Download success for url: %@", [self absoluteUrlWithPath:url]);
+        HYBAppLog(@"Download fail for url %@, reason : %@",
+                  [self absoluteUrlWithPath:url],
+                  [error description]);
       }
     }
   }];
   
+  [session resume];
   if (session) {
     [[self allTasks] addObject:session];
   }

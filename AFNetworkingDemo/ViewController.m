@@ -93,7 +93,17 @@
 //  [task cancel];
   
   NSLog(@"%lld", [HYBNetworking totalCacheSize]);
-  [HYBNetworking clearCaches];
+//  [HYBNetworking clearCaches];
+  
+   path = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/b.zip"];
+[HYBNetworking downloadWithUrl:@"http://wiki.lbsyun.baidu.com/cms/iossdk/sdk/BaiduMap_IOSSDK_v2.10.2_All.zip" saveToPath:path progress:^(int64_t bytesRead, int64_t totalBytesRead) {
+    
+  } success:^(id response) {
+    
+  } failure:^(NSError *error) {
+    
+  }];
+//  NSLog(@"%@", task);
 }
 
 

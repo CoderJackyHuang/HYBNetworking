@@ -37,8 +37,12 @@
 * 格式化打印日志
 * 增加对手动取消请求接口是否在失败时还回调的控制
 
+#version 3.1.0
+
+* fix download data can't start request.
+
 ```
-pod 'HYBNetworking', '~>3.0.0'
+pod 'HYBNetworking', '~>3.1.0'
 ```
 
 若要支持iOS6.0，可使用前一版本：
