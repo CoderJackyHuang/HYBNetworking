@@ -51,6 +51,11 @@ pod 'HYBNetworking', '~>3.1.0'
 pod 'HYBNetworking', '~>1.1.3'
 ```
 
+#version 3.2.0
+
+* 增加请求超时设置
+* 增加配置是否在网络异常（无网络）时自动尝试从本地读取缓存。
+
 #文章讲解
 笔者的个人博客发表的讲解的文章：[基于AFNetworkgin2.5.2的网络封装](http://www.henishuo.com/base-on-afnetworking-wrapper/)
 
