@@ -86,6 +86,22 @@ typedef void(^HYBResponseFail)(NSError *error);
 + (NSString *)baseUrl;
 
 /**
+ *	设置请求超时时间，默认为60秒
+ *
+ *	@param timeout 超时时间
+ */
++ (void)setTimeout:(NSTimeInterval)timeout;
+
+/**
+ *	当检查到网络异常时，是否从从本地提取数据。默认为NO。一旦设置为YES,当设置刷新缓存时，
+ *  若网络异常也会从缓存中读取数据。同样，如果设置超时不回调，同样也会在网络异常时回调，除非
+ *  本地没有数据！
+ *
+ *	@param shouldObtain	YES/NO
+ */
++ (void)obtainDataFromLocalWhenNetworkUnconnected:(BOOL)shouldObtain;
+
+/**
  *	@author 黄仪标
  *
  *	默认只缓存GET请求的数据，对于POST请求是不缓存的。如果要缓存POST获取的数据，需要手动调用设置

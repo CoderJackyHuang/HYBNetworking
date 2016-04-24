@@ -13,53 +13,5 @@
             stopOnStyle = "0">
          </BreakpointContent>
       </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "HYBNetworking/HYBNetworking.m"
-            timestampString = "480913806.567344"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "134"
-            endingLineNumber = "134"
-            landmarkName = "+cancelAllRequest"
-            landmarkType = "5">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "+[HYBNetworking cancelAllRequest]"
-                  moduleName = "AFNetworkingDemo"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/huangyibiao/huangyibiao_library/HYBNetworking/HYBNetworking/HYBNetworking.m"
-                  timestampString = "480914210.258024"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "134"
-                  endingLineNumber = "134"
-                  offsetFromSymbolStart = "44">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__33+[HYBNetworking cancelAllRequest]_block_invoke"
-                  moduleName = "AFNetworkingDemo"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/huangyibiao/huangyibiao_library/HYBNetworking/HYBNetworking/HYBNetworking.m"
-                  timestampString = "480914210.258823"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "134"
-                  endingLineNumber = "134"
-                  offsetFromSymbolStart = "60">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

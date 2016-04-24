@@ -49,6 +49,8 @@ static NSMutableArray *sg_requestTasks;
 static BOOL sg_cacheGet = YES;
 static BOOL sg_cachePost = NO;
 static BOOL sg_shouldCallbackOnCancelRequest = YES;
+static NSTimeInterval sg_timeout = 60.0f;
+static BOOL sg_shoulObtainLocalWhenUnconnected = NO;
 
 @implementation HYBNetworking
 
@@ -63,6 +65,14 @@ static BOOL sg_shouldCallbackOnCancelRequest = YES;
 
 + (NSString *)baseUrl {
   return sg_privateNetworkBaseUrl;
+}
+
++ (void)setTimeout:(NSTimeInterval)timeout {
+  sg_timeout = timeout;
+}
+
++ (void)obtainDataFromLocalWhenNetworkUnconnected:(BOOL)shouldObtain {
+  sg_shoulObtainLocalWhenUnconnected = shouldObtain;
 }
 
 + (void)enableInterfaceDebug:(BOOL)isDebug {
@@ -259,8 +269,8 @@ static inline NSString *cachePath() {
       return nil;
     }
   } else {
-      NSURL *absouluteURL = [NSURL URLWithString:absolute];
-
+    NSURL *absouluteURL = [NSURL URLWithString:absolute];
+    
     if (absouluteURL == nil) {
       HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文，请尝试Encode URL");
       return nil;
@@ -313,10 +323,32 @@ static inline NSString *cachePath() {
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
       [[self allTasks] removeObject:task];
       
-      [self handleCallbackWithError:error fail:fail];
-      
-      if ([self isDebug]) {
-        [self logWithFailError:error url:absolute params:params];
+      if ([error code] < 0 && sg_cacheGet) {// 获取缓存
+        id response = [HYBNetworking cahceResponseWithURL:absolute
+                                               parameters:params];
+        if (response) {
+          if (success) {
+            [self successResponse:response callback:success];
+            
+            if ([self isDebug]) {
+              [self logWithSuccessResponse:response
+                                       url:absolute
+                                    params:params];
+            }
+          }
+        } else {
+          [self handleCallbackWithError:error fail:fail];
+          
+          if ([self isDebug]) {
+            [self logWithFailError:error url:absolute params:params];
+          }
+        }
+      } else {
+        [self handleCallbackWithError:error fail:fail];
+        
+        if ([self isDebug]) {
+          [self logWithFailError:error url:absolute params:params];
+        }
       }
     }];
   } else if (httpMethod == 2) {
@@ -360,10 +392,33 @@ static inline NSString *cachePath() {
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
       [[self allTasks] removeObject:task];
       
-      [self handleCallbackWithError:error fail:fail];
-      
-      if ([self isDebug]) {
-        [self logWithFailError:error url:absolute params:params];
+      if ([error code] < 0 && sg_cachePost) {// 获取缓存
+        id response = [HYBNetworking cahceResponseWithURL:absolute
+                                               parameters:params];
+        
+        if (response) {
+          if (success) {
+            [self successResponse:response callback:success];
+            
+            if ([self isDebug]) {
+              [self logWithSuccessResponse:response
+                                       url:absolute
+                                    params:params];
+            }
+          }
+        } else {
+          [self handleCallbackWithError:error fail:fail];
+          
+          if ([self isDebug]) {
+            [self logWithFailError:error url:absolute params:params];
+          }
+        }
+      } else {
+        [self handleCallbackWithError:error fail:fail];
+        
+        if ([self isDebug]) {
+          [self logWithFailError:error url:absolute params:params];
+        }
       }
     }];
   }
@@ -395,10 +450,6 @@ static inline NSString *cachePath() {
   if (uploadURL == nil) {
     HYBAppLog(@"URLString无效，无法生成URL。可能是URL中有中文或特殊字符，请尝试Encode URL");
     return nil;
-  }
-  
-  if ([self shouldEncode]) {
-    url = [self encodeUrl:url];
   }
   
   AFHTTPSessionManager *manager = [self manager];
@@ -462,7 +513,7 @@ static inline NSString *cachePath() {
   }
   
   NSString *absolute = [self absoluteUrlWithPath:url];
-
+  
   AFHTTPSessionManager *manager = [self manager];
   HYBURLSessionTask *session = [manager POST:url parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
     NSData *imageData = UIImageJPEGRepresentation(image, 1);
@@ -626,6 +677,8 @@ static inline NSString *cachePath() {
                                                                             @"text/javascript",
                                                                             @"text/xml",
                                                                             @"image/*"]];
+  
+  manager.requestSerializer.timeoutInterval = sg_timeout;
   
   // 设置允许同时最大并发数量，过大容易出问题
   manager.operationQueue.maxConcurrentOperationCount = 3;
@@ -824,7 +877,7 @@ static inline NSString *cachePath() {
   
   if (![path hasPrefix:@"http://"] && ![path hasPrefix:@"https://"]) {
     absoluteUrl = [NSString stringWithFormat:@"%@%@",
-                                         [self baseUrl], path];
+                   [self baseUrl], path];
   }
   
   return absoluteUrl;
