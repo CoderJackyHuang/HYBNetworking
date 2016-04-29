@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.license      = "MIT"
   s.author             = { "huangyibiao" => "" }
   s.platform     = :ios, "7.0"
-  s.source       = { :git => "https://github.com/CoderJackyHuang/HYBNetworking.git", :tag => "3.1.0" }
+  s.source       = { :git => "https://github.com/CoderJackyHuang/HYBNetworking.git", :tag => "3.2.0" }
   s.source_files  = "HYBNetworking", "*.{h,m}"
   s.requires_arc = true
   s.dependency "AFNetworking", "~> 3.0.0"
