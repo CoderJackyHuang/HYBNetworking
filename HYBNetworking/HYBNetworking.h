@@ -54,6 +54,13 @@ typedef NS_ENUM(NSUInteger, HYBRequestType) {
   kHYBRequestTypePlainText  = 2 // 普通text/html
 };
 
+typedef NS_ENUM(NSUInteger, HYBNetworkStatus) {
+    kHYBNetworkStatusUnknown          = -1,//未知网络
+    kHYBNetworkStatusNotReachable     = 0,//网络无连接
+    kHYBNetworkStatusReachableViaWWAN = 1,//2，3，4G网络
+    kHYBNetworkStatusReachableViaWiFi = 2,//WIFI网络
+};
+
 @class NSURLSessionTask;
 
 // 请勿直接使用NSURLSessionDataTask,以减少对第三方的依赖

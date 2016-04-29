@@ -45,6 +45,7 @@ static BOOL sg_shouldAutoEncode = NO;
 static NSDictionary *sg_httpHeaders = nil;
 static HYBResponseType sg_responseType = kHYBResponseTypeJSON;
 static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
+static HYBNetworkStatus sg_networkStatus = kHYBNetworkStatusUnknown;
 static NSMutableArray *sg_requestTasks;
 static BOOL sg_cacheGet = YES;
 static BOOL sg_cachePost = NO;
@@ -284,23 +285,42 @@ static inline NSString *cachePath() {
   HYBURLSessionTask *session = nil;
   
   if (httpMethod == 1) {
-    if (sg_cacheGet && !refreshCache) {// 获取缓存
-      id response = [HYBNetworking cahceResponseWithURL:absolute
-                                             parameters:params];
-      if (response) {
-        if (success) {
-          [self successResponse:response callback:success];
-          
-          if ([self isDebug]) {
-            [self logWithSuccessResponse:response
-                                     url:absolute
-                                  params:params];
+      if (sg_cacheGet) {
+          if (sg_shoulObtainLocalWhenUnconnected) {
+              if (sg_networkStatus == kHYBNetworkStatusNotReachable ||  sg_networkStatus == kHYBNetworkStatusUnknown ) {
+                  id response = [HYBNetworking cahceResponseWithURL:absolute
+                                                         parameters:params];
+                  if (response) {
+                      if (success) {
+                          [self successResponse:response callback:success];
+                          
+                          if ([self isDebug]) {
+                              [self logWithSuccessResponse:response
+                                                       url:absolute
+                                                    params:params];
+                          }
+                      }
+                      return nil;
+                  }
+              }
           }
-        }
-        
-        return nil;
+          if (!refreshCache) {// 获取缓存 
+              id response = [HYBNetworking cahceResponseWithURL:absolute
+                                                     parameters:params];
+              if (response) {
+                  if (success) {
+                      [self successResponse:response callback:success];
+                      
+                      if ([self isDebug]) {
+                          [self logWithSuccessResponse:response
+                                                   url:absolute
+                                                params:params];
+                      }
+                  }
+                  return nil;
+              }
+          }
       }
-    }
     
     session = [manager GET:url parameters:params progress:^(NSProgress * _Nonnull downloadProgress) {
       if (progress) {
@@ -352,24 +372,42 @@ static inline NSString *cachePath() {
       }
     }];
   } else if (httpMethod == 2) {
-    if (sg_cachePost && !refreshCache) {// 获取缓存
-      id response = [HYBNetworking cahceResponseWithURL:absolute
-                                             parameters:params];
-      
-      if (response) {
-        if (success) {
-          [self successResponse:response callback:success];
-          
-          if ([self isDebug]) {
-            [self logWithSuccessResponse:response
-                                     url:absolute
-                                  params:params];
+      if (sg_cachePost ) {// 获取缓存
+          if (sg_shoulObtainLocalWhenUnconnected) {
+              if (sg_networkStatus == kHYBNetworkStatusNotReachable ||  sg_networkStatus == kHYBNetworkStatusUnknown ) {
+                  id response = [HYBNetworking cahceResponseWithURL:absolute
+                                                         parameters:params];
+                  if (response) {
+                      if (success) {
+                          [self successResponse:response callback:success];
+                          
+                          if ([self isDebug]) {
+                              [self logWithSuccessResponse:response
+                                                       url:absolute
+                                                    params:params];
+                          }
+                      }
+                      return nil;
+                  }
+              }
           }
-        }
-        
-        return nil;
+          if (!refreshCache) {
+              id response = [HYBNetworking cahceResponseWithURL:absolute
+                                                     parameters:params];
+              if (response) {
+                  if (success) {
+                      [self successResponse:response callback:success];
+                      
+                      if ([self isDebug]) {
+                          [self logWithSuccessResponse:response
+                                                   url:absolute
+                                                params:params];
+                      }
+                  }
+                  return nil;
+              }
+          }
       }
-    }
     
     session = [manager POST:url parameters:params progress:^(NSProgress * _Nonnull downloadProgress) {
       if (progress) {
@@ -682,7 +720,27 @@ static inline NSString *cachePath() {
   
   // 设置允许同时最大并发数量，过大容易出问题
   manager.operationQueue.maxConcurrentOperationCount = 3;
+
+  if (sg_shoulObtainLocalWhenUnconnected && (sg_cacheGet || sg_cachePost ) ) {
+      [self detectNetwork];
+  }
   return manager;
+}
+
++ (void)detectNetwork{
+  AFNetworkReachabilityManager *reachabilityManager = [AFNetworkReachabilityManager sharedManager];
+  [reachabilityManager startMonitoring];
+  [reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+      if (status == AFNetworkReachabilityStatusNotReachable){
+          sg_networkStatus = kHYBNetworkStatusNotReachable;
+      }else if (status == AFNetworkReachabilityStatusUnknown){
+          sg_networkStatus = kHYBNetworkStatusUnknown;
+      }else if (status == AFNetworkReachabilityStatusReachableViaWWAN){
+          sg_networkStatus = kHYBNetworkStatusReachableViaWWAN;
+      }else if (status == AFNetworkReachabilityStatusReachableViaWiFi){
+          sg_networkStatus = kHYBNetworkStatusReachableViaWiFi;
+      }
+  }];
 }
 
 + (void)logWithSuccessResponse:(id)response url:(NSString *)url params:(NSDictionary *)params {
@@ -876,8 +934,23 @@ static inline NSString *cachePath() {
   NSString *absoluteUrl = path;
   
   if (![path hasPrefix:@"http://"] && ![path hasPrefix:@"https://"]) {
-    absoluteUrl = [NSString stringWithFormat:@"%@%@",
-                   [self baseUrl], path];
+      if ([[self baseUrl] hasSuffix:@"/"]) {
+          if ([path hasPrefix:@"/"]) {
+              NSMutableString * mutablePath = [NSMutableString stringWithString:path];
+              [mutablePath deleteCharactersInRange:NSMakeRange(0, 1)];
+              absoluteUrl = [NSString stringWithFormat:@"%@%@",
+                             [self baseUrl], mutablePath];
+          }else {
+              absoluteUrl = [NSString stringWithFormat:@"%@%@",[self baseUrl], path];
+          }
+      }else {
+          if ([path hasPrefix:@"/"]) {
+              absoluteUrl = [NSString stringWithFormat:@"%@%@",[self baseUrl], path];
+          }else {
+              absoluteUrl = [NSString stringWithFormat:@"%@/%@",
+                             [self baseUrl], path];
+          }
+      }
   }
   
   return absoluteUrl;
