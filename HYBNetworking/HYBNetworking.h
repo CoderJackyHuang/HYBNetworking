@@ -54,7 +54,7 @@ typedef NS_ENUM(NSUInteger, HYBRequestType) {
   kHYBRequestTypePlainText  = 2 // 普通text/html
 };
 
-typedef NS_ENUM(NSUInteger, HYBNetworkStatus) {
+typedef NS_ENUM(NSInteger, HYBNetworkStatus) {
     kHYBNetworkStatusUnknown          = -1,//未知网络
     kHYBNetworkStatusNotReachable     = 0,//网络无连接
     kHYBNetworkStatusReachableViaWWAN = 1,//2，3，4G网络
