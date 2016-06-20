@@ -624,7 +624,7 @@ static inline NSString *cachePath() {
       progressBlock(downloadProgress.completedUnitCount, downloadProgress.totalUnitCount);
     }
   } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
-    return [NSURL URLWithString:saveToPath];
+    return [NSURL fileURLWithPath:saveToPath];
   } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
     [[self allTasks] removeObject:session];
     
@@ -729,15 +729,16 @@ static inline NSString *cachePath() {
 
 + (void)detectNetwork{
   AFNetworkReachabilityManager *reachabilityManager = [AFNetworkReachabilityManager sharedManager];
+  
   [reachabilityManager startMonitoring];
   [reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
       if (status == AFNetworkReachabilityStatusNotReachable){
           sg_networkStatus = kHYBNetworkStatusNotReachable;
-      }else if (status == AFNetworkReachabilityStatusUnknown){
+      } else if (status == AFNetworkReachabilityStatusUnknown){
           sg_networkStatus = kHYBNetworkStatusUnknown;
-      }else if (status == AFNetworkReachabilityStatusReachableViaWWAN){
+      } else if (status == AFNetworkReachabilityStatusReachableViaWWAN){
           sg_networkStatus = kHYBNetworkStatusReachableViaWWAN;
-      }else if (status == AFNetworkReachabilityStatusReachableViaWiFi){
+      } else if (status == AFNetworkReachabilityStatusReachableViaWiFi){
           sg_networkStatus = kHYBNetworkStatusReachableViaWiFi;
       }
   }];
@@ -940,13 +941,13 @@ static inline NSString *cachePath() {
               [mutablePath deleteCharactersInRange:NSMakeRange(0, 1)];
               absoluteUrl = [NSString stringWithFormat:@"%@%@",
                              [self baseUrl], mutablePath];
-          }else {
+          } else {
               absoluteUrl = [NSString stringWithFormat:@"%@%@",[self baseUrl], path];
           }
-      }else {
+      } else {
           if ([path hasPrefix:@"/"]) {
               absoluteUrl = [NSString stringWithFormat:@"%@%@",[self baseUrl], path];
-          }else {
+          } else {
               absoluteUrl = [NSString stringWithFormat:@"%@/%@",
                              [self baseUrl], path];
           }
