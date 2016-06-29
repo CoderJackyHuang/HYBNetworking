@@ -129,6 +129,14 @@ typedef void(^HYBResponseFail)(NSError *error);
 + (unsigned long long)totalCacheSize;
 
 /**
+ *	默认不会自动清除缓存，如果需要，可以设置自动清除缓存，并且需要指定上限。当指定上限>0M时，
+ *  若缓存达到了上限值，则每次启动应用则尝试自动去清理缓存。
+ *
+ *	@param mSize				缓存上限大小，单位为M（兆），默认为0，表示不清理
+ */
++ (void)autoToClearCacheWithLimitedToSize:(NSUInteger)mSize;
+
+/**
  *	@author 黄仪标
  *
  *	清除缓存

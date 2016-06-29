@@ -23,6 +23,12 @@
   [HYBNetworking updateBaseUrl:@"http://apistore.baidu.com"];
   [HYBNetworking enableInterfaceDebug:YES];
   
+  // 配置请求和响应类型，由于部分伙伴们的服务器不接收JSON传过去，现在默认值改成了plainText
+  [HYBNetworking configRequestType:kHYBRequestTypePlainText
+                      responseType:kHYBResponseTypeJSON
+               shouldAutoEncodeUrl:YES
+           callbackOnCancelRequest:NO];
+  
   /*
    [HYBNetworking.m：in line: 189]-->[message:
    absoluteUrl: http://apistore.baidu.com/microservice/cityinfo?cityname=%E5%8C%97%E4%BA%AC
@@ -45,7 +51,7 @@
   [HYBNetworking cacheGetRequest:YES shoulCachePost:YES];
   
   // 测试GET API
-  NSString *url = @"http://apistore.baidu.com/microservice/cityinfo?cityname=beijing";
+  NSString *url = @"http://api.map.baidu.com/telematics/v3/weather?location=嘉兴&output=json&ak=5slgyqGDENN7Sy7pw29IUvrZ";
   //   设置请求类型为text/html类型
   //  [HYBNetworking configRequestType:kHYBRequestTypePlainText];
   //  [HYBNetworking configResponseType:kHYBResponseTypeData];
