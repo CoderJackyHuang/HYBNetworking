@@ -64,6 +64,10 @@ pod 'HYBNetworking', '~>1.1.3'
 
 * 将download url存储修改
 
+#Version 3.2.3
+
+* 修改默认requestType为plainText，以解决很多小伙伴们出现后台接收不到参数的问题！
+
 #文章讲解
 笔者的个人博客发表的讲解的文章：[基于AFNetworkgin2.5.2的网络封装](http://www.henishuo.com/base-on-afnetworking-wrapper/)
 

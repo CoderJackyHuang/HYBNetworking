@@ -1,7 +1,7 @@
 
 Pod::Spec.new do |s|
   s.name         = "HYBNetworking"
-  s.version      = "3.2.2"
+  s.version      = "3.2.3"
   s.summary      = "基于AFNetworking封装的简单易用网络库，提供了常用的API,2.0以下版本为基于AFN2.5.2封装的，2.0以上版本为基于AFN3.0封装的"
 
   s.description  = <<-DESC
@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.license      = "MIT"
   s.author             = { "huangyibiao" => "" }
   s.platform     = :ios, "7.0"
-  s.source       = { :git => "https://github.com/CoderJackyHuang/HYBNetworking.git", :tag => "3.2.2" }
+  s.source       = { :git => "https://github.com/CoderJackyHuang/HYBNetworking.git", :tag => "3.2.3" }
   s.source_files  = "HYBNetworking", "*.{h,m}"
   s.requires_arc = true
   s.dependency "AFNetworking", "~> 3.0.0"

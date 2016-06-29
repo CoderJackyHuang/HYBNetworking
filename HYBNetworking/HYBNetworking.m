@@ -44,7 +44,7 @@ static BOOL sg_isEnableInterfaceDebug = NO;
 static BOOL sg_shouldAutoEncode = NO;
 static NSDictionary *sg_httpHeaders = nil;
 static HYBResponseType sg_responseType = kHYBResponseTypeJSON;
-static HYBRequestType  sg_requestType  = kHYBRequestTypeJSON;
+static HYBRequestType  sg_requestType  = kHYBRequestTypePlainText;
 static HYBNetworkStatus sg_networkStatus = kHYBNetworkStatusUnknown;
 static NSMutableArray *sg_requestTasks;
 static BOOL sg_cacheGet = YES;
