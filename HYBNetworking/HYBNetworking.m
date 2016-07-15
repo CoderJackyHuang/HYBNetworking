@@ -45,7 +45,7 @@ static BOOL sg_shouldAutoEncode = NO;
 static NSDictionary *sg_httpHeaders = nil;
 static HYBResponseType sg_responseType = kHYBResponseTypeJSON;
 static HYBRequestType  sg_requestType  = kHYBRequestTypePlainText;
-static HYBNetworkStatus sg_networkStatus = kHYBNetworkStatusUnknown;
+static HYBNetworkStatus sg_networkStatus = kHYBNetworkStatusReachableViaWiFi;
 static NSMutableArray *sg_requestTasks;
 static BOOL sg_cacheGet = YES;
 static BOOL sg_cachePost = NO;
@@ -97,6 +97,9 @@ static NSUInteger sg_maxCacheSize = 0;
 
 + (void)obtainDataFromLocalWhenNetworkUnconnected:(BOOL)shouldObtain {
   sg_shoulObtainLocalWhenUnconnected = shouldObtain;
+  if (sg_shoulObtainLocalWhenUnconnected && (sg_cacheGet || sg_cachePost)) {
+    [self detectNetwork];
+  }
 }
 
 + (void)enableInterfaceDebug:(BOOL)isDebug {
@@ -749,10 +752,6 @@ static inline NSString *cachePath() {
       manager.operationQueue.maxConcurrentOperationCount = 3;
       sg_sharedManager = manager;
     }
-  }
-  
-  if (sg_shoulObtainLocalWhenUnconnected && (sg_cacheGet || sg_cachePost)) {
-    [self detectNetwork];
   }
   
   return sg_sharedManager;
