@@ -78,7 +78,7 @@ static NSUInteger sg_maxCacheSize = 0;
 }
 
 + (void)updateBaseUrl:(NSString *)baseUrl {
-  if ([baseUrl isEqualToString:sg_privateNetworkBaseUrl] && baseUrl && baseUrl.length) {
+  if (![baseUrl isEqualToString:sg_privateNetworkBaseUrl] && baseUrl && baseUrl.length) {
     sg_isBaseURLChanged = YES;
   } else {
     sg_isBaseURLChanged = NO;
