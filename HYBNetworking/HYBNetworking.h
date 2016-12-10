@@ -246,6 +246,43 @@ typedef void(^HYBResponseFail)(NSError *error);
                           progress:(HYBPostProgress)progress
                            success:(HYBResponseSuccess)success
                               fail:(HYBResponseFail)fail;
+
+/*!
+ *  @author 王国锋, 16-12-08 22:31:34
+ *
+ *  PUT请求接口，若不指定baseurl，可传完整的url
+ *
+ *  @param url     接口路径，如/path/getArticleList
+ *  @param params  接口中所需的参数，如@{"categoryid" : @(12)}
+ *  @param success 接口成功请求到数据的回调
+ *  @param fail    接口请求数据失败的回调
+ *
+ *  @return 返回的对象中有可取消请求的API
+ */
++ (HYBURLSessionTask *)putWithUrl:(NSString *)url
+                     refreshCache:(BOOL)refreshCache
+                           params:(NSDictionary *)params
+                          success:(HYBResponseSuccess)success
+                             fail:(HYBResponseFail)fail;
+
+/*!
+ *  @author 王国锋, 16-12-10 17:07:32
+ *
+ *  DELETE请求接口，若不指定baseurl，可传完整的url
+ *
+ *  @param url     接口路径，如/path/getArticleList
+ *  @param params  接口中所需的参数，如@{"categoryid" : @(12)}
+ *  @param success 接口成功请求到数据的回调
+ *  @param fail    接口请求数据失败的回调
+ *
+ *  @return 返回的对象中有可取消请求的API
+ */
++ (HYBURLSessionTask *)deleteWithUrl:(NSString *)url
+                        refreshCache:(BOOL)refreshCache
+                              params:(NSDictionary *)params
+                             success:(HYBResponseSuccess)success
+                                fail:(HYBResponseFail)fail;
+
 /**
  *	@author 黄仪标, 16-01-31 00:01:40
  *

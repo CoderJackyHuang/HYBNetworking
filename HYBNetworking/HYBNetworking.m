@@ -7,9 +7,12 @@
 //
 
 #import "HYBNetworking.h"
-#import "AFNetworkActivityIndicatorManager.h"
-#import "AFNetworking.h"
-#import "AFHTTPSessionManager.h"
+//#import "AFNetworkActivityIndicatorManager.h"
+//#import "AFNetworking.h"
+//#import "AFHTTPSessionManager.h"
+#import <AFNetworking/AFNetworking.h>
+#import <AFNetworking/AFHTTPSessionManager.h>
+#import <AFNetworking/AFNetworkActivityIndicatorManager.h>
 
 #import <CommonCrypto/CommonDigest.h>
 
@@ -280,6 +283,35 @@ static inline NSString *cachePath() {
                           fail:fail];
 }
 
++ (HYBURLSessionTask *)putWithUrl:(NSString *)url
+                     refreshCache:(BOOL)refreshCache
+                           params:(NSDictionary *)params
+                          success:(HYBResponseSuccess)success
+                             fail:(HYBResponseFail)fail {
+    return [self _requestWithUrl:url
+                    refreshCache:refreshCache
+                       httpMedth:3
+                          params:params
+                        progress:nil
+                         success:success
+                            fail:fail];
+}
+
++ (HYBURLSessionTask *)deleteWithUrl:(NSString *)url
+                        refreshCache:(BOOL)refreshCache
+                              params:(NSDictionary *)params
+                             success:(HYBResponseSuccess)success
+                                fail:(HYBResponseFail)fail {
+    return [self _requestWithUrl:url
+                    refreshCache:refreshCache
+                       httpMedth:4
+                          params:params
+                        progress:nil
+                         success:success
+                            fail:fail];
+}
+
+
 + (HYBURLSessionTask *)_requestWithUrl:(NSString *)url
                           refreshCache:(BOOL)refreshCache
                              httpMedth:(NSUInteger)httpMethod
@@ -485,6 +517,52 @@ static inline NSString *cachePath() {
         }
       }
     }];
+  } else if (httpMethod == 3) {
+      
+      //PUT
+      session = [manager PUT:url parameters:params success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+          [self successResponse:responseObject callback:success];
+          
+          [[self allTasks] removeObject:task];
+          
+          if ([self isDebug]) {
+              [self logWithSuccessResponse:responseObject
+                                       url:absolute
+                                    params:params];
+          }
+      } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+          [[self allTasks] removeObject:task];
+          
+          [self handleCallbackWithError:error fail:fail];
+          
+          if ([self isDebug]) {
+              [self logWithFailError:error url:absolute params:params];
+          }
+      }];
+      
+  } else if (httpMethod == 4) {
+      
+      //DELETE
+      session = [manager DELETE:url parameters:params success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+          [self successResponse:responseObject callback:success];
+          
+          [[self allTasks] removeObject:task];
+          
+          if ([self isDebug]) {
+              [self logWithSuccessResponse:responseObject
+                                       url:absolute
+                                    params:params];
+          }
+      } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+          [[self allTasks] removeObject:task];
+          
+          [self handleCallbackWithError:error fail:fail];
+          
+          if ([self isDebug]) {
+              [self logWithFailError:error url:absolute params:params];
+          }
+      }];
+      
   }
   
   if (session) {
