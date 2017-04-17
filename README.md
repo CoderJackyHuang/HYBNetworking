@@ -1,30 +1,30 @@
 # HYBNetworking
 基于AFNetworking封装的网络层，支持自由配置请求头，自动缓存及可设置自动清除策略，支持常用的GET/POST/单文件上传、下载功能等，详情可以阅读文章讲解！
 
-#安装
+# 安装
 
 ```
 pod 'HYBNetworking', '~> 3.3.0'
 ```
 
-#文章讲解
+# 文章讲解
 
 笔者的个人博客发表的讲解的文章：[基于AFNetworkgin2.5.2的网络封装](http://101.200.209.244/base-on-afnetworking-wrapper/)，此版本不再维护！
 
 另外，最新更新到基于AFN3.0版本的，请阅读：[基于AFNetworking3.0的网络封装](http://101.200.209.244/base-on-afnetworking3-0-wrapper/)
 
-#关注我
+# 关注我
 
 如果在使用过程中遇到问题，或者想要与我交流，可加入有问必答**QQ群：324400294**<br>
 关注微信公众号：[**iOSDevShares**]()<br>
 关注博客：[http://www.henishuo.com/](http://101.200.209.244/)
 
 
-#LISENCE
+# LISENCE
 
 MIT
 
-#历史版本变化
+# 历史版本变化
 
 * 1.1
   * 升级AFNetworking到2.5.4
