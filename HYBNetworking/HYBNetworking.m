@@ -767,7 +767,12 @@ static inline NSString *cachePath() {
     if (sg_sharedManager == nil || sg_isBaseURLChanged) {
       // 开启转圈圈
       [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
-      
+        
+        //处理NSURLSession delegate 循环引用问题
+        if (sg_sharedManager) {
+            [sg_sharedManager invalidateSessionCancelingTasks:NO];
+        }
+        
       AFHTTPSessionManager *manager = nil;;
       if ([self baseUrl] != nil) {
         manager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:[self baseUrl]]];
